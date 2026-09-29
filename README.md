@@ -2,15 +2,48 @@
 
 This folder contains the OCEANOVA upload page and the local service that analyzes SAR GeoTIFF images.
 
-## Start it
+## Requirements
 
-1. Extract the ZIP to a folder on your computer.
-2. Double-click **`start-oceanova.bat`** and wait for the server to start.
-3. The first run downloads Python packages, including PyTorch. It needs an internet connection and can take a few minutes.
-4. When the terminal says the server is running, open **http://127.0.0.1:8000** in your browser.
-5. Choose a `.tif` or `.tiff` SAR image, then click **Analyze image**. Keep the terminal open while you use the site. Press **Ctrl+C** in the terminal to stop the server.
+- Windows with Python 3.11 or newer.
+- Internet access for first-run package installation and live industry/vessel data.
+- A Geoapify API key for industry searches and an AISStream API key for vessel searches.
 
-Do not open `index.html` directly. Use the local website address in step 4 so the page can talk to the analysis service.
+## Start the app
+
+The app uses three local services. Start each in its own PowerShell window from the project root and leave all three running while using the app.
+
+### 1. SAR analysis and main page
+
+Double-click `start-oceanova.bat`. On first run it installs Python packages, including PyTorch, and loads the bundled model. Open **http://127.0.0.1:8000** after the terminal reports that Uvicorn is running.
+
+### 2. Nearby industry API
+
+In a second PowerShell window:
+
+```powershell
+Set-Location .\sih-backend-main\sih-backend-main\bakend
+$env:GEOAPIFY_API_KEY = "your Geoapify API key"
+py -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe app.py
+```
+
+This API listens on port `5000`. Set the key in this PowerShell session before starting the service; do not commit API keys to the repository.
+
+### 3. Nearby vessel API
+
+In a third PowerShell window:
+
+```powershell
+Set-Location .\anzil\sih_backend-main\backend
+py -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe app.py
+```
+
+Configure `AISSTREAM_API_KEY` in `anzil/sih_backend-main/backend/.env` using `.env.example` as a template. This API listens on port `5001`.
+
+Do not open `index.html` directly. Use **http://127.0.0.1:8000** so the browser can reach the local services. Choose a `.tif` or `.tiff` SAR image and click **Analyze image**. Keep all service windows open; press Ctrl+C in each one to stop its service.
 
 ## What’s included
 
@@ -26,12 +59,12 @@ The results grid shows **MODEL SCORE** separately from **PIXEL ACCURACY**. Model
 
 The results show the SAR image with the predicted oil region highlighted, generated from the actual uploaded raster. The upload and analysis flow uses the actual selected GeoTIFF. The spill centroid coordinates are transformed from the GeoTIFF CRS and are not predicted directly by the U-Net.
 
-## Nearby industry and vessel searches
+## Nearby searches
 
-- **Nearby industry** queries live OpenStreetMap/Overpass mapped facilities within 50 km. The Overpass `around` filter searches by distance [as documented here](https://wiki.openstreetmap.org/wiki/OverpassQL). Results are sorted by geodesic distance and include an OpenStreetMap attribution. Coverage depends on mapped data; proximity does not establish a cause.
-- **Nearby vessel** subscribes to AISStream live AIS reports within 25 km for 8 seconds. Create an AISStream key and set it on the server before starting the app. In PowerShell, run `$env:AISSTREAM_API_KEY="YOUR_KEY"` and then start `start-oceanova.bat`. The API key stays on the backend; AISStream requires server-side WebSocket subscriptions [per its docs](https://aisstream.io/documentation). If no key is configured, the app reports that vessel search is unavailable instead of showing fabricated ships. AIS is a time-limited position feed, not a complete historical track, and nearby vessels are not accused of causing a spill.
+After image analysis, the **Search Nearby Industry** and **Search Nearby Vessel** buttons pass the spill centroid latitude and longitude from the SAR result into their respective screens. Each screen fills the coordinates and starts its search automatically. The coordinates come from the GeoTIFF geospatial metadata; the U-Net predicts the oil mask, not latitude or longitude. A valid georeferenced centroid is required.
 
-The search buttons appear after successful image analysis. They use the detected centroid latitude and longitude; they are disabled if no georeferenced spill centroid was produced.
+- **Industry** uses the Geoapify-backed service on port `5000` with a default search radius of 200 km. Results are mapped candidates, not confirmed spill sources; coverage depends on provider data.
+- **Vessel** uses the AISStream-backed service on port `5001` with a default search radius of 100 km. AIS positions are time-limited and may not include every vessel; proximity does not establish cause.
 
 The real-data `Eclipso_Final_UNet.pt` checkpoint from the supplied checkpoints archive is included in `backend/model/weights/`. The app loads this Garcia-INPE boundary-aware U-Net and uses the notebook's normalization, 256-pixel tiles, 128-pixel stride, and 0.96 threshold. It does not silently substitute another model. The final held-out test-set pixel accuracy is **99.32%**, calculated to two decimals from the 22 matching 800×600 scenes. The notebook reports micro-averaged test metrics to four decimal places; the matching test split provides 115,125 ground-truth oil pixels across 10,560,000 total pixels. The resulting confusion-count combinations all round to the same 99.32% accuracy.
 

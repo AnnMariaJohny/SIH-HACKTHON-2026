@@ -1,5 +1,4 @@
 import * as THREE from "three";
-import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
 
 // ============================================================
@@ -60,22 +59,6 @@ document
 // CONTROLS
 // ============================================================
 
-const controls = new OrbitControls(
-    camera,
-    renderer.domElement
-);
-
-controls.enableDamping = true;
-
-controls.dampingFactor = 0.035;
-
-controls.enablePan = false;
-
-controls.minDistance = 2.0;
-
-controls.maxDistance = 7.0;
-
-
 // ============================================================
 // LIGHTING
 // ============================================================
@@ -118,6 +101,14 @@ scene.add(earthGroup);
 // ============================================================
 
 const loader = new THREE.TextureLoader();
+let earthTexturesReady = false;
+loader.manager.onLoad = () => {
+    earthTexturesReady = true;
+    window.parent.postMessage(
+        { type: "oceanova-earth-ready" },
+        window.location.origin
+    );
+};
 
 
 // ------------------------------------------------------------
@@ -218,6 +209,95 @@ const earth =
     );
 
 earthGroup.add(earth);
+
+
+function createSatellite() {
+    const satellite = new THREE.Group();
+    const gold = new THREE.MeshStandardMaterial({ color: 0xc5a46a, metalness: 0.62, roughness: 0.4 });
+    const silver = new THREE.MeshStandardMaterial({ color: 0xd8e0e3, metalness: 0.58, roughness: 0.32 });
+    const panel = new THREE.MeshStandardMaterial({ color: 0x174b76, metalness: 0.38, roughness: 0.34, emissive: 0x071522, emissiveIntensity: 0.12 });
+    const addBox = (size, position, material) => {
+        const mesh = new THREE.Mesh(new THREE.BoxGeometry(...size), material);
+        mesh.position.set(...position);
+        satellite.add(mesh);
+        return mesh;
+    };
+
+    addBox([0.38, 0.32, 0.3], [0, 0, 0], gold);
+    addBox([0.3, 0.22, 0.018], [0, 0, 0.16], silver);
+    addBox([0.2, 0.025, 0.025], [0, -0.09, 0.18], gold);
+    for (const side of [-1, 1]) {
+        addBox([0.025, 0.28, 0.018], [side * 0.19, 0, 0.165], gold);
+        addBox([0.24, 0.018, 0.018], [0, side * 0.14, 0.165], gold);
+    }
+
+    for (const direction of [-1, 1]) {
+        const centerX = direction * 0.76;
+        addBox([0.76, 0.42, 0.025], [centerX, 0, 0], panel);
+
+        const grid = [];
+        for (let column = 0; column <= 4; column++) {
+            const x = centerX - 0.38 + column * 0.19;
+            grid.push(x, -0.21, 0.016, x, 0.21, 0.016);
+        }
+        for (let row = 0; row <= 3; row++) {
+            const y = -0.21 + row * 0.14;
+            grid.push(centerX - 0.38, y, 0.016, centerX + 0.38, y, 0.016);
+        }
+        const gridGeometry = new THREE.BufferGeometry();
+        gridGeometry.setAttribute("position", new THREE.Float32BufferAttribute(grid, 3));
+        satellite.add(new THREE.LineSegments(gridGeometry, new THREE.LineBasicMaterial({ color: 0x8bbbd5 })));
+
+        const boom = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.38, 8), silver);
+        boom.rotation.z = Math.PI / 2;
+        boom.position.x = direction * 0.39;
+        satellite.add(boom);
+    }
+
+    const dishRadius = 0.14;
+    const dishPositions = [];
+    const dishIndices = [];
+    const rings = 8;
+    const segments = 32;
+    for (let ring = 0; ring <= rings; ring++) {
+        const radius = dishRadius * ring / rings;
+        const depth = -0.025 * (radius / dishRadius) ** 2;
+        for (let segment = 0; segment <= segments; segment++) {
+            const angle = segment / segments * Math.PI * 2;
+            dishPositions.push(Math.cos(angle) * radius, Math.sin(angle) * radius, depth);
+        }
+    }
+    for (let ring = 0; ring < rings; ring++) {
+        for (let segment = 0; segment < segments; segment++) {
+            const current = ring * (segments + 1) + segment;
+            const next = current + segments + 1;
+            dishIndices.push(current, next, current + 1, current + 1, next, next + 1);
+        }
+    }
+    const dishGeometry = new THREE.BufferGeometry();
+    dishGeometry.setAttribute("position", new THREE.Float32BufferAttribute(dishPositions, 3));
+    dishGeometry.setIndex(dishIndices);
+    dishGeometry.computeVertexNormals();
+
+    const dish = new THREE.Mesh(
+        dishGeometry,
+        new THREE.MeshStandardMaterial({ color: 0xe0e5e7, metalness: 0.36, roughness: 0.42, side: THREE.DoubleSide })
+    );
+    dish.rotation.y = -0.2;
+    dish.position.set(-0.1, 0.27, 0.2);
+    satellite.add(dish);
+
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(dishRadius, 0.01, 8, 28), silver);
+    rim.rotation.y = -0.2;
+    rim.position.copy(dish.position);
+    satellite.add(rim);
+
+    satellite.scale.setScalar(0.45);
+    scene.add(satellite);
+    return satellite;
+}
+
+const orbitingSatellite = createSatellite();
 
 
 // ============================================================
@@ -482,7 +562,11 @@ scene.add(dust);
 // ANIMATION
 // ============================================================
 
-function animate() {
+let satelliteTravelStarted = null;
+let satelliteCenterReported = false;
+const satelliteOrbitDuration = 3600;
+
+function animate(currentTime) {
 
     requestAnimationFrame(
         animate
@@ -513,13 +597,27 @@ function animate() {
 
     dust.rotation.y += 0.000008;
 
+    if (earthTexturesReady) {
+        if (satelliteTravelStarted === null) satelliteTravelStarted = currentTime;
+        const progress = Math.min((currentTime - satelliteTravelStarted) / satelliteOrbitDuration, 1);
+        const easedProgress = progress * progress * (3 - 2 * progress);
+        const angle = THREE.MathUtils.lerp(Math.PI * 1.15, Math.PI * 2, easedProgress);
 
-    // --------------------------------------------------------
-    // CONTROLS
-    // --------------------------------------------------------
-
-    controls.update();
-
+        if (progress < 1) {
+            orbitingSatellite.position.set(Math.sin(angle) * 1.18, 0.06, Math.cos(angle) * 1.18);
+            orbitingSatellite.rotation.set(0.05, angle, Math.sin(progress * Math.PI) * 0.04);
+        } else {
+            orbitingSatellite.position.set(0, 0.06, 1.18);
+            orbitingSatellite.rotation.set(0, 0, 0);
+            if (!satelliteCenterReported) {
+                satelliteCenterReported = true;
+                window.parent.postMessage(
+                    { type: "oceanova-satellite-centered" },
+                    window.location.origin
+                );
+            }
+        }
+    }
 
     // --------------------------------------------------------
     // RENDER
@@ -536,7 +634,7 @@ function animate() {
 // START IMMEDIATELY
 // ============================================================
 
-animate();
+requestAnimationFrame(animate);
 
 
 // ============================================================
@@ -559,10 +657,7 @@ window.addEventListener(
         );
 
         renderer.setPixelRatio(
-            Math.min(
-                window.devicePixelRatio,
-                2
-            )
+            Math.min(window.devicePixelRatio, 2)
         );
 
     }
