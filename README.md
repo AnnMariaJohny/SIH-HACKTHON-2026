@@ -45,6 +45,23 @@ Configure `AISSTREAM_API_KEY` in `anzil/sih_backend-main/backend/.env` using `.e
 
 Do not open `index.html` directly. Use **http://127.0.0.1:8000** so the browser can reach the local services. Choose a `.tif` or `.tiff` SAR image and click **Analyze image**. Keep all service windows open; press Ctrl+C in each one to stop its service.
 
+## Deploy online
+
+The Vercel build publishes only the frontend pages. The Python APIs run as separate Render services described in `render.yaml`.
+
+1. Push the repository to GitHub, then create a Render Blueprint from that repository and select `render.yaml`. Enter `GEOAPIFY_API_KEY` and `AISSTREAM_API_KEY` in Render's secret prompts. Render creates the SAR, industry, and vessel services.
+2. Copy each Render service URL from its dashboard. In Vercel, import the same repository with the project root as the root directory and add these Production environment variables:
+
+   ```text
+   OCEANOVA_ANALYSIS_URL=https://your-sar-service.onrender.com
+   OCEANOVA_INDUSTRY_URL=https://your-industry-service.onrender.com
+   OCEANOVA_VESSEL_URL=https://your-vessel-service.onrender.com
+   ```
+
+3. Deploy Vercel. Copy its production URL (for example, `https://your-oceanova.vercel.app`) and add it to the vessel service in Render as `OCEANOVA_FRONTEND_ORIGIN`, then redeploy that service so browser CORS allows the Vercel site.
+
+All three Render services use the free plan in the Blueprint. Free services sleep when idle; the first request can take a while to wake up. The SAR model may exceed the free service's 512 MB memory limit. If that happens, the analysis API requires a larger plan; the frontend and nearby search APIs can still be hosted separately. Keep API keys in Render environment settings, never in Vercel client-side variables or committed files.
+
 ## What’s included
 
 - `index.html` — OCEANOVA upload, preview, and results page.

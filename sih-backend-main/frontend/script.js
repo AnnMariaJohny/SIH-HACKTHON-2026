@@ -27,7 +27,7 @@ const coordinatesText =
 
 
 const API_BASE_URL =
-    "http://127.0.0.1:5000";
+    window.OCEANOVA_ENDPOINTS?.industry || "http://127.0.0.1:5000";
 
 const MAX_SEARCH_RADIUS_METERS =
     200000;

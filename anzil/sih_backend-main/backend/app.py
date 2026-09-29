@@ -30,6 +30,9 @@ frontend_origins = [
     "http://localhost:5001",
     "http://127.0.0.1:5001",
 ]
+vercel_frontend_origin = os.getenv("OCEANOVA_FRONTEND_ORIGIN", "").strip().rstrip("/")
+if vercel_frontend_origin:
+    frontend_origins.append(vercel_frontend_origin)
 codespace_name = os.getenv("CODESPACE_NAME")
 forwarding_domain = os.getenv("GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN")
 if codespace_name and forwarding_domain:
