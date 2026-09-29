@@ -1,0 +1,650 @@
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+
+    font-family: Arial, Helvetica, sans-serif;
+
+    background: #020810;
+    color: white;
+}
+
+
+/* =========================================================
+   3D EARTH
+========================================================= */
+
+#cesiumContainer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 42%;
+
+    z-index: 0;
+
+    border-left: 1px solid rgba(116, 190, 210, 0.18);
+}
+
+
+/* =========================================================
+   DARK BACKGROUND / EARTH OVERLAY
+========================================================= */
+
+.dark-overlay {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 42%;
+
+    z-index: 1;
+
+    pointer-events: none;
+
+    background:
+        radial-gradient(
+            circle at 50% 50%,
+            rgba(3, 20, 38, 0.05) 0%,
+            rgba(0, 5, 12, 0.28) 65%,
+            rgba(0, 4, 10, 0.62) 100%
+        );
+}
+
+
+/* =========================================================
+   MAIN APP
+========================================================= */
+
+.app {
+    position: relative;
+
+    z-index: 2;
+
+    width: 100%;
+    height: 100%;
+
+    pointer-events: none;
+}
+
+
+/* =========================================================
+   TOP BAR
+========================================================= */
+
+.topbar {
+    position: absolute;
+
+    top: 0;
+    left: 0;
+
+    width: 100%;
+
+    max-width: 42%;
+
+    padding: 26px 34px;
+
+    display: flex;
+
+    align-items: flex-start;
+    justify-content: space-between;
+
+    background:
+        linear-gradient(
+            to bottom,
+            rgba(1, 9, 18, 0.90),
+            rgba(1, 9, 18, 0.25),
+            transparent
+        );
+}
+
+
+.logo {
+    font-size: 27px;
+
+    font-weight: 800;
+
+    letter-spacing: 2px;
+}
+
+
+.logo span {
+    color: #57d6c5;
+}
+
+
+.subtitle {
+    margin-top: 5px;
+
+    color: #a9b8c7;
+
+    font-size: 12px;
+
+    letter-spacing: 1.2px;
+}
+
+
+/* =========================================================
+   STATUS
+========================================================= */
+
+.status {
+    display: flex;
+
+    align-items: center;
+
+    gap: 9px;
+
+    padding: 9px 14px;
+
+    border: 1px solid
+        rgba(87, 214, 197, 0.30);
+
+    border-radius: 20px;
+
+    background:
+        rgba(3, 18, 30, 0.72);
+
+    color: #b8c8d6;
+
+    font-size: 11px;
+
+    letter-spacing: 1px;
+}
+
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+
+    border-radius: 50%;
+
+    background: #52e0bd;
+
+    box-shadow:
+        0 0 12px
+        rgba(82, 224, 189, 0.9);
+}
+
+
+/* =========================================================
+   SEARCH PANEL
+========================================================= */
+
+.panel {
+    pointer-events: auto;
+
+    position: absolute;
+
+    top: 120px;
+    left: 34px;
+
+    width: min(365px, calc(42vw - 68px));
+
+    max-height: calc(100vh - 145px);
+
+    overflow-y: auto;
+
+    padding: 25px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(5, 20, 34, 0.94),
+            rgba(2, 10, 20, 0.86)
+        );
+
+    border: 1px solid
+        rgba(116, 190, 210, 0.22);
+
+    border-radius: 18px;
+
+    box-shadow:
+        0 20px 70px
+        rgba(0, 0, 0, 0.48),
+
+        inset 0 1px
+        rgba(255, 255, 255, 0.04);
+
+    backdrop-filter: blur(12px);
+}
+
+
+.section-label {
+    color: #5ed9ca;
+
+    font-size: 10px;
+
+    font-weight: 700;
+
+    letter-spacing: 2px;
+
+    margin-bottom: 12px;
+}
+
+
+h1 {
+    margin: 0;
+
+    font-size: 27px;
+
+    line-height: 1.2;
+
+    font-weight: 700;
+}
+
+
+.description {
+    color: #9eafbd;
+
+    font-size: 13px;
+
+    line-height: 1.6;
+
+    margin: 12px 0 22px;
+}
+
+
+/* =========================================================
+   FORM
+========================================================= */
+
+.form-group {
+    margin-bottom: 17px;
+}
+
+
+label {
+    display: block;
+
+    margin-bottom: 7px;
+
+    color: #c8d3dd;
+
+    font-size: 10px;
+
+    font-weight: 700;
+
+    letter-spacing: 1.3px;
+}
+
+
+input {
+    width: 100%;
+
+    height: 43px;
+
+    padding: 0 13px;
+
+    color: #ffffff;
+
+    background:
+        rgba(0, 0, 0, 0.38);
+
+    border: 1px solid
+        rgba(137, 179, 197, 0.30);
+
+    border-radius: 8px;
+
+    outline: none;
+
+    font-size: 13px;
+}
+
+
+input:focus {
+    border-color: #55d5c4;
+
+    box-shadow:
+        0 0 0 2px
+        rgba(85, 213, 196, 0.08);
+}
+
+
+.radius-row {
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+}
+
+
+.radius-row input {
+    width: 120px;
+}
+
+
+.radius-row span {
+    color: #8ea1b0;
+
+    font-size: 10px;
+
+    letter-spacing: 1px;
+}
+
+
+/* =========================================================
+   ANALYZE BUTTON
+========================================================= */
+
+button {
+    width: 100%;
+
+    height: 45px;
+
+    border: 0;
+
+    border-radius: 8px;
+
+    background: #4fd1c1;
+
+    color: #021015;
+
+    font-size: 11px;
+
+    font-weight: 800;
+
+    letter-spacing: 1.2px;
+
+    cursor: pointer;
+
+    transition:
+        transform 0.15s ease,
+        box-shadow 0.15s ease,
+        background 0.15s ease;
+}
+
+
+button:hover {
+    background: #69e2d2;
+
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 8px 25px
+        rgba(79, 209, 193, 0.20);
+}
+
+
+button:disabled {
+    opacity: 0.55;
+
+    cursor: wait;
+
+    transform: none;
+}
+
+
+/* =========================================================
+   RESULT BOX
+========================================================= */
+
+.result-box {
+    margin-top: 18px;
+
+    padding: 13px;
+
+    border-radius: 9px;
+
+    background:
+        rgba(0, 0, 0, 0.28);
+
+    border: 1px solid
+        rgba(255, 255, 255, 0.07);
+}
+
+
+.result-title {
+    color: #5ed9ca;
+
+    font-size: 10px;
+
+    font-weight: 800;
+
+    letter-spacing: 1px;
+
+    margin-bottom: 6px;
+}
+
+
+#resultText {
+    color: #aebdca;
+
+    font-size: 12px;
+
+    line-height: 1.5;
+}
+
+
+.risk-subtitle {
+    display: block;
+    margin-top: 5px;
+    color: #8ea1b0;
+}
+
+
+.risk-table-wrap {
+    max-width: 100%;
+    margin-top: 12px;
+    overflow-x: auto;
+}
+
+
+.risk-table {
+    width: 100%;
+    border-collapse: collapse;
+    color: #aebdca;
+    font-size: 10px;
+    white-space: nowrap;
+}
+
+
+.risk-table th {
+    padding: 7px 6px;
+    border-bottom: 1px solid rgba(116, 190, 210, 0.28);
+    color: #5ed9ca;
+    font-size: 9px;
+    letter-spacing: 0.5px;
+    text-align: left;
+    text-transform: uppercase;
+}
+
+
+.risk-table td {
+    max-width: 150px;
+    overflow: hidden;
+    padding: 8px 6px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    text-overflow: ellipsis;
+    vertical-align: top;
+    white-space: normal;
+}
+
+
+.risk-table td:nth-child(9) {
+    min-width: 145px;
+}
+
+
+.risk-badge {
+    width: fit-content;
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: #061017;
+    font-size: 9px;
+    font-weight: 800;
+}
+
+
+.risk-very-high { background: #ff5261; }
+.risk-high { background: #ff9861; }
+.risk-medium { background: #f4d35e; }
+.risk-low { background: #61d69b; }
+.risk-possible { background: #8fc8e8; }
+
+.other-facilities {
+    margin-top: 12px;
+    color: #aebdca;
+    font-size: 11px;
+}
+
+.other-facilities summary {
+    padding: 8px 0;
+    color: #5ed9ca;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+
+/* =========================================================
+   LEGEND
+========================================================= */
+
+.legend {
+    margin-top: 18px;
+
+    padding-top: 15px;
+
+    border-top: 1px solid
+        rgba(255, 255, 255, 0.08);
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 9px;
+
+    color: #aebdca;
+
+    font-size: 11px;
+}
+
+
+.legend > div {
+    display: flex;
+
+    align-items: center;
+
+    gap: 9px;
+}
+
+
+.legend-marker {
+    width: 11px;
+    height: 11px;
+
+    border-radius: 50%;
+
+    display: inline-block;
+}
+
+
+.legend-marker.green {
+    background: #38e59d;
+
+    box-shadow:
+        0 0 10px
+        rgba(56, 229, 157, 0.8);
+}
+
+
+.legend-marker.red {
+    background: #ff3e4d;
+
+    box-shadow:
+        0 0 10px
+        rgba(255, 62, 77, 0.8);
+}
+
+
+/* =========================================================
+   COORDINATES
+========================================================= */
+
+.coordinates {
+    position: absolute;
+
+    bottom: 18px;
+    right: 24px;
+
+    z-index: 4;
+
+    padding: 9px 13px;
+
+    border: 1px solid
+        rgba(255, 255, 255, 0.10);
+
+    border-radius: 7px;
+
+    background:
+        rgba(2, 10, 18, 0.75);
+
+    color: #9fb1bf;
+
+    font-family: monospace;
+
+    font-size: 10px;
+
+    letter-spacing: 1px;
+}
+
+
+/* =========================================================
+   CESIUM CONTROLS
+========================================================= */
+
+.cesium-viewer-toolbar,
+.cesium-viewer-animationContainer,
+.cesium-viewer-timelineContainer,
+.cesium-viewer-bottom {
+    z-index: 3;
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 700px) {
+
+    #cesiumContainer {
+        top: 54%;
+        left: 0;
+        width: 100%;
+        border-left: 0;
+        border-top: 1px solid rgba(116, 190, 210, 0.18);
+    }
+
+    .dark-overlay {
+        top: 54%;
+        left: 0;
+    }
+
+    .panel {
+        left: 15px;
+        right: 15px;
+
+        width: auto;
+
+        max-height: calc(54vh - 120px);
+
+        top: 105px;
+    }
+
+    .topbar {
+        padding: 18px;
+
+        max-width: 100%;
+    }
+
+    .status {
+        display: none;
+    }
+}

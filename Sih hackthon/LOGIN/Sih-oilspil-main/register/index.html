@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>OCEANOVA — Register</title>
+
+    <link rel="stylesheet" href="../Login/style.css">
+</head>
+
+<body class="register-page">
+
+    <div class="stars"></div>
+    <div class="stars stars-two"></div>
+
+    <main class="page">
+
+        <section class="login-panel">
+
+            <div class="brand">
+                <div class="brand-name">OCEANOVA</div>
+                <div class="brand-line"></div>
+                <div class="system-label">OCEAN SAR SYSTEM</div>
+            </div>
+
+            <div class="form-area">
+
+                <p class="eyebrow">NEW USER REGISTRATION</p>
+
+                <h1>Create account.</h1>
+
+                <p class="description">
+                    Register to access OCEANOVA monitoring systems.
+                </p>
+
+                <form id="registerForm">
+
+                    <div class="field">
+                        <label for="name">FULL NAME</label>
+
+                        <input
+                            type="text"
+                            id="name"
+                            name="name"
+                            placeholder="Enter your name"
+                            autocomplete="name"
+                            required
+                        >
+                    </div>
+
+                    <div class="field">
+                        <label for="email">EMAIL</label>
+
+                        <input
+                            type="email"
+                            id="email"
+                            name="email"
+                            placeholder="Enter your email"
+                            autocomplete="email"
+                            required
+                        >
+                    </div>
+
+                    <div class="field">
+                        <label for="password">PASSWORD</label>
+
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            placeholder="Create a password"
+                            autocomplete="new-password"
+                            required
+                        >
+                    </div>
+
+                    <div class="field">
+                        <label for="confirmPassword">CONFIRM PASSWORD</label>
+
+                        <input
+                            type="password"
+                            id="confirmPassword"
+                            name="confirmPassword"
+                            placeholder="Confirm your password"
+                            autocomplete="new-password"
+                            required
+                        >
+                    </div>
+
+                    <button type="submit" class="login-button">
+
+                        <span>CREATE ACCOUNT</span>
+
+                        <span class="arrow">→</span>
+
+                    </button>
+
+                    <p id="message"></p>
+
+                </form>
+
+                <div class="register-link">
+
+                    <span>ALREADY REGISTERED?</span>
+
+                    <a href="../Login/Index.html">
+                        RETURN TO LOGIN
+                    </a>
+
+                </div>
+
+            </div>
+
+            <div class="system-status">
+                <span class="status-dot"></span>
+                REGISTRATION NODE ACTIVE
+            </div>
+
+        </section>
+
+        <section class="space-info">
+
+            <div class="hud-top">
+                <span>OCEAN SAR SCAN</span>
+                <span>NO. 08</span>
+            </div>
+
+            <div class="hud-center">
+
+                <div class="radar" aria-label="Active ocean SAR radar">
+                    <div class="radar-grid"></div>
+                    <div class="radar-sweep"></div>
+                    <span class="radar-blip radar-blip-one"></span>
+                    <span class="radar-blip radar-blip-two"></span>
+                    <span class="radar-blip radar-blip-three"></span>
+                </div>
+
+                <div class="orbit-ring"></div>
+
+                <div class="coordinates">
+                    USER NODE<br>
+                    REGISTRATION
+                </div>
+
+                <div class="hologram-earth" aria-label="Holographic Earth with orbiting satellite">
+                    <div class="earth-grid"></div>
+                    <div class="earth-highlight"></div>
+                    <div class="satellite-track">
+                        <div class="satellite">
+                            <span class="satellite-body"></span>
+                            <span class="satellite-panel satellite-panel-left"></span>
+                            <span class="satellite-panel satellite-panel-right"></span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="hud-bottom">
+                <span>SATELLITE ORBIT</span>
+                <span>ACTIVE</span>
+            </div>
+
+        </section>
+
+    </main>
+
+    <script src="script.js"></script>
+
+</body>
+</html>

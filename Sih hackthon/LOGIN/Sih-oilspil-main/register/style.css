@@ -1,0 +1,386 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --background: #02070d;
+    --text: #eef8ff;
+    --muted: #7d919f;
+    --line: rgba(160, 205, 225, 0.16);
+    --cyan: #73d8ff;
+}
+
+body {
+    min-height: 100vh;
+    background: #02070d;
+    color: var(--text);
+    font-family: "Inter", sans-serif;
+    overflow: hidden;
+}
+
+.stars,
+.stars-two {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+}
+
+.stars {
+    background-image:
+        radial-gradient(1px 1px at 8% 17%, white, transparent),
+        radial-gradient(1px 1px at 17% 73%, white, transparent),
+        radial-gradient(1px 1px at 29% 36%, white, transparent),
+        radial-gradient(1px 1px at 41% 84%, white, transparent),
+        radial-gradient(1px 1px at 53% 22%, white, transparent),
+        radial-gradient(1px 1px at 67% 62%, white, transparent),
+        radial-gradient(1px 1px at 74% 12%, white, transparent),
+        radial-gradient(1px 1px at 88% 45%, white, transparent),
+        radial-gradient(1px 1px at 94% 81%, white, transparent);
+
+    opacity: .55;
+}
+
+.stars-two {
+    background-image:
+        radial-gradient(1px 1px at 12% 49%, white, transparent),
+        radial-gradient(1px 1px at 24% 91%, white, transparent),
+        radial-gradient(1px 1px at 47% 9%, white, transparent),
+        radial-gradient(1px 1px at 61% 77%, white, transparent),
+        radial-gradient(1px 1px at 83% 29%, white, transparent),
+        radial-gradient(1px 1px at 97% 58%, white, transparent);
+
+    opacity: .35;
+}
+
+.page {
+    min-height: 100vh;
+    display: flex;
+}
+
+.register-panel {
+    width: 52%;
+    min-width: 520px;
+    min-height: 100vh;
+
+    padding: 48px 8vw 40px;
+
+    display: flex;
+    flex-direction: column;
+
+    background: rgba(2, 7, 13, .94);
+
+    border-right: 1px solid rgba(140,205,230,.08);
+
+    position: relative;
+    z-index: 5;
+}
+
+.brand-name {
+    font-family: "Orbitron", sans-serif;
+    font-size: clamp(2rem, 3.4vw, 3.8rem);
+    font-weight: 700;
+    letter-spacing: .13em;
+}
+
+.brand-line {
+    width: 58px;
+    height: 2px;
+    background: var(--cyan);
+    margin: 16px 0 9px;
+}
+
+.system-label,
+.eyebrow,
+.field label,
+.login-link,
+.system-status,
+.hud-top,
+.hud-bottom {
+    font-family: "Orbitron", monospace;
+}
+
+.system-label {
+    font-size: .58rem;
+    letter-spacing: .24em;
+    color: var(--muted);
+}
+
+.form-area {
+    width: min(420px, 100%);
+    margin-top: 7vh;
+}
+
+.eyebrow {
+    color: var(--cyan);
+    font-size: .59rem;
+    letter-spacing: .2em;
+    margin-bottom: 14px;
+}
+
+h1 {
+    font-size: 2.15rem;
+    font-weight: 500;
+    letter-spacing: -.04em;
+    margin-bottom: 9px;
+}
+
+.description {
+    color: var(--muted);
+    font-size: .88rem;
+    line-height: 1.6;
+    margin-bottom: 29px;
+}
+
+.field {
+    margin-bottom: 16px;
+}
+
+.field label {
+    display: block;
+    color: #9eb1bc;
+    font-size: .55rem;
+    letter-spacing: .17em;
+    margin-bottom: 7px;
+}
+
+input {
+    width: 100%;
+    height: 47px;
+
+    border: 1px solid var(--line);
+    border-radius: 2px;
+
+    background: rgba(255,255,255,.025);
+    color: white;
+
+    padding: 0 14px;
+
+    outline: none;
+
+    font-family: "Inter", sans-serif;
+    font-size: .86rem;
+}
+
+input::placeholder {
+    color: #4e606b;
+}
+
+input:focus {
+    border-color: rgba(115,216,255,.65);
+}
+
+.register-button {
+    width: 100%;
+    height: 50px;
+
+    margin-top: 8px;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    padding: 0 18px;
+
+    background: rgba(115,216,255,.08);
+    border: 1px solid rgba(115,216,255,.55);
+    border-radius: 2px;
+
+    color: white;
+
+    font-family: "Orbitron", sans-serif;
+    font-size: .61rem;
+    letter-spacing: .15em;
+
+    cursor: pointer;
+}
+
+.register-button:hover {
+    background: rgba(115,216,255,.15);
+    border-color: var(--cyan);
+}
+
+.arrow {
+    color: var(--cyan);
+    font-size: 1.15rem;
+}
+
+#message {
+    min-height: 18px;
+    margin-top: 10px;
+    font-size: .72rem;
+}
+
+.login-link {
+    border-top: 1px solid var(--line);
+
+    margin-top: 20px;
+    padding-top: 17px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    font-size: .5rem;
+    letter-spacing: .12em;
+    color: #61737e;
+}
+
+.login-link a {
+    color: var(--cyan);
+    text-decoration: none;
+}
+
+.login-link a:hover {
+    text-decoration: underline;
+}
+
+.system-status {
+    margin-top: auto;
+
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    color: #5d747f;
+    font-size: .48rem;
+    letter-spacing: .15em;
+}
+
+.status-dot {
+    width: 5px;
+    height: 5px;
+
+    border-radius: 50%;
+
+    background: #76d6a3;
+}
+
+.space-info {
+    flex: 1;
+    position: relative;
+
+    background:
+        radial-gradient(
+            circle at 65% 50%,
+            rgba(20,86,117,.10),
+            transparent 42%
+        );
+}
+
+.hud-top,
+.hud-bottom {
+    position: absolute;
+    left: 45px;
+    right: 45px;
+
+    display: flex;
+    justify-content: space-between;
+
+    font-size: .5rem;
+    letter-spacing: .16em;
+    color: #536c78;
+}
+
+.hud-top {
+    top: 45px;
+}
+
+.hud-bottom {
+    bottom: 45px;
+}
+
+.hud-center {
+    position: absolute;
+
+    left: 50%;
+    top: 50%;
+
+    width: 250px;
+    height: 250px;
+
+    transform: translate(-50%, -50%);
+}
+
+.orbit-ring {
+    position: absolute;
+    inset: 0;
+
+    border: 1px solid rgba(115,216,255,.14);
+    border-radius: 50%;
+}
+
+.orbit-ring::before {
+    content: "";
+
+    position: absolute;
+    inset: 24px;
+
+    border: 1px dashed rgba(115,216,255,.12);
+    border-radius: 50%;
+}
+
+.orbit-ring::after {
+    content: "";
+
+    position: absolute;
+
+    width: 5px;
+    height: 5px;
+
+    top: 21px;
+    left: 50%;
+
+    border-radius: 50%;
+
+    background: var(--cyan);
+}
+
+.coordinates {
+    position: absolute;
+
+    left: 50%;
+    top: 50%;
+
+    transform: translate(-50%, -50%);
+
+    text-align: center;
+
+    font-family: "Orbitron", monospace;
+    font-size: .51rem;
+    line-height: 1.8;
+    letter-spacing: .12em;
+
+    color: #65808c;
+}
+
+@media (max-width: 850px) {
+
+    body {
+        overflow-y: auto;
+    }
+
+    .page {
+        display: block;
+    }
+
+    .register-panel {
+        width: 100%;
+        min-width: 0;
+        padding: 35px 30px;
+        border: none;
+    }
+
+    .form-area {
+        margin-top: 60px;
+    }
+
+    .space-info {
+        display: none;
+    }
+
+    .system-status {
+        margin-top: 70px;
+    }
+}

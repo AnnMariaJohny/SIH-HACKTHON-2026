@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nearby Industry Risk</title>
+  <style>
+    :root { font-family: Arial, sans-serif; color: #17202a; background: #eef3f6; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; padding: 32px 16px; }
+    main { max-width: 760px; margin: 0 auto; }
+    header { margin-bottom: 24px; }
+    h1 { margin: 0 0 8px; font-size: clamp(1.8rem, 5vw, 2.7rem); }
+    p { color: #5d6973; }
+    section { background: #fff; border: 1px solid #dce4e8; border-radius: 8px; padding: 20px; box-shadow: 0 8px 24px #17202a12; }
+    form { display: grid; grid-template-columns: repeat(3, 1fr) auto; gap: 12px; align-items: end; }
+    label { display: grid; gap: 6px; color: #52616b; font-size: .85rem; font-weight: 700; }
+    input, button { min-height: 42px; border-radius: 5px; border: 1px solid #c7d2d9; padding: 0 11px; font: inherit; }
+    button { border-color: #146c94; background: #146c94; color: white; cursor: pointer; font-weight: 700; }
+    button:hover { background: #0e5575; }
+    button:disabled { opacity: .6; cursor: wait; }
+    .geocode-form { display: grid; grid-template-columns: 1fr auto; gap: 12px; margin-bottom: 18px; }
+    .geocode-form label { min-width: 0; }
+    #status { min-height: 24px; margin: 18px 0 0; }
+    .error { color: #a12b2b; }
+    .summary { display: flex; gap: 18px; flex-wrap: wrap; border-bottom: 1px solid #e4eaed; margin-bottom: 14px; padding-bottom: 14px; }
+    .summary strong { display: block; font-size: 1.2rem; }
+    .source { border-left: 4px solid #9aaab3; background: #f7f9fa; margin: 10px 0; padding: 12px 14px; }
+    .source h3 { margin: 0 0 6px; font-size: 1rem; }
+    .source p { margin: 4px 0; font-size: .9rem; }
+    .high { border-color: #c0392b; } .medium { border-color: #d68910; } .low { border-color: #25865a; }
+    .badge { display: inline-block; border-radius: 12px; padding: 3px 8px; color: #fff; font-size: .75rem; font-weight: 700; }
+    .badge.high { background: #c0392b; } .badge.medium { background: #d68910; } .badge.low { background: #25865a; }
+    @media (max-width: 650px) { form { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Nearby Industry Risk</h1>
+      <p>Search for industrial locations around a coordinate.</p>
+    </header>
+    <section>
+      <form id="geocode-form" class="geocode-form">
+        <label>Address <input id="address" type="text" placeholder="38 Upper Montagu Street, Westminster" required></label>
+        <button type="submit">Find coordinates</button>
+      </form>
+      <form id="search-form">
+        <label>Latitude <input id="latitude" type="number" step="any" min="-90" max="90" value="28.6139" required></label>
+        <label>Longitude <input id="longitude" type="number" step="any" min="-180" max="180" value="77.2090" required></label>
+        <label>Radius (metres) <input id="radius" type="number" min="1" value="5000" required></label>
+        <button type="submit">Search</button>
+      </form>
+      <div id="status" role="status"></div>
+      <div id="results"></div>
+    </section>
+  </main>
+  <script>
+    const form = document.querySelector('#search-form');
+    const geocodeForm = document.querySelector('#geocode-form');
+    const status = document.querySelector('#status');
+    const results = document.querySelector('#results');
+
+    geocodeForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const button = geocodeForm.querySelector('button');
+      button.disabled = true;
+      status.className = '';
+      status.textContent = 'Finding coordinates...';
+      try {
+        const address = encodeURIComponent(document.querySelector('#address').value);
+        const response = await fetch(`/geocode?text=${address}`);
+        const data = await response.json();
+        if (!response.ok || !data.success) throw new Error(data.error || 'Geocoding failed.');
+        document.querySelector('#latitude').value = data.latitude;
+        document.querySelector('#longitude').value = data.longitude;
+        status.textContent = `Coordinates found for ${data.address}.`;
+      } catch (error) {
+        status.className = 'error';
+        status.textContent = error.message;
+      } finally {
+        button.disabled = false;
+      }
+    });
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const button = form.querySelector('button');
+      button.disabled = true;
+      status.className = '';
+      status.textContent = 'Searching...';
+      results.replaceChildren();
+
+      try {
+        const response = await fetch('/nearby-industries', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            latitude: Number(document.querySelector('#latitude').value),
+            longitude: Number(document.querySelector('#longitude').value),
+            radius: Number(document.querySelector('#radius').value)
+          })
+        });
+        const data = await response.json();
+        if (!response.ok || !data.success) throw new Error(data.error || 'Search failed.');
+        renderResults(data);
+      } catch (error) {
+        status.className = 'error';
+        status.textContent = error.message;
+      } finally {
+        button.disabled = false;
+      }
+    });
+
+    function renderResults(data) {
+      status.textContent = '';
+      const summary = document.createElement('div');
+      summary.className = 'summary';
+      summary.innerHTML = `<div><strong>${data.nearby_factory_count}</strong>industries found</div><div><strong>${data.overall_risk}</strong>overall risk</div>`;
+      results.append(summary);
+      data.nearby_sources.forEach((source) => {
+        const item = document.createElement('article');
+        const risk = source.risk.toLowerCase();
+        item.className = `source ${risk}`;
+        item.innerHTML = `<h3>${escapeHtml(source.name)} <span class="badge ${risk}">${source.risk}</span></h3><p>${escapeHtml(source.industry_type)} · ${source.distance_km} km away</p><p>${escapeHtml(source.address)}</p>`;
+        results.append(item);
+      });
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[character]));
+    }
+  </script>
+</body>
+</html>

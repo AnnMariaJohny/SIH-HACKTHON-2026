@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="theme-color" content="#f4f6f2">
+	<title>Oceanova | Vessel Risk Monitor</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+	<style>
+		:root {
+			color-scheme: light;
+			--paper: #050607;
+			--surface: #101214;
+			--ink: #e8edf2;
+			--muted: #9ba4ae;
+			--line: #292d32;
+			--sea: #315f80;
+			--sea-dark: #244967;
+			--sea-pale: #182633;
+			--coral: #c74c3e;
+			--amber: #aa741b;
+			--shadow: 0 12px 32px rgba(0, 0, 0, .38);
+		}
+
+		* { box-sizing: border-box; }
+		body { position: relative; isolation: isolate; margin: 0; background: var(--paper); color: var(--ink); font-family: "DM Sans", sans-serif; }
+		body::before, body::after { position: fixed; inset: 0; z-index: -1; content: ""; pointer-events: none; }
+		body::before {
+			background-image:
+				radial-gradient(1px 1px at 7% 13%, rgba(255,255,255,.8) 50%, transparent 100%),
+				radial-gradient(1px 1px at 19% 67%, rgba(205,224,255,.72) 50%, transparent 100%),
+				radial-gradient(1.5px 1.5px at 31% 32%, rgba(255,255,255,.68) 50%, transparent 100%),
+				radial-gradient(1px 1px at 43% 82%, rgba(215,232,255,.72) 50%, transparent 100%),
+				radial-gradient(1px 1px at 56% 18%, rgba(255,255,255,.78) 50%, transparent 100%),
+				radial-gradient(1.5px 1.5px at 68% 58%, rgba(222,234,255,.7) 50%, transparent 100%),
+				radial-gradient(1px 1px at 78% 27%, rgba(255,255,255,.8) 50%, transparent 100%),
+				radial-gradient(1px 1px at 91% 74%, rgba(213,230,255,.75) 50%, transparent 100%),
+				radial-gradient(1px 1px at 96% 8%, rgba(255,255,255,.7) 50%, transparent 100%);
+			background-size: 173px 149px, 211px 197px, 263px 227px, 307px 251px, 191px 233px, 281px 179px, 227px 293px, 317px 211px, 239px 269px;
+			opacity: .68;
+		}
+		body::after {
+			background-image:
+				radial-gradient(1px 1px at 14% 39%, #fff 50%, transparent 100%),
+				radial-gradient(1px 1px at 38% 9%, #d9e8ff 50%, transparent 100%),
+				radial-gradient(1.5px 1.5px at 63% 91%, #fff 50%, transparent 100%),
+				radial-gradient(1px 1px at 84% 46%, #d9e8ff 50%, transparent 100%);
+			background-size: 197px 223px, 271px 181px, 233px 307px, 311px 239px;
+			opacity: .28;
+			animation: star-twinkle 4.8s ease-in-out infinite alternate;
+		}
+		@keyframes star-twinkle { from { opacity: .12; } to { opacity: .55; } }
+		button, input { font: inherit; }
+		button { cursor: pointer; }
+		.shell { min-height: 100vh; }
+		.topbar { display: flex; align-items: center; justify-content: space-between; min-height: 72px; padding: 0 5vw; background: var(--surface); border-bottom: 1px solid var(--line); }
+		.brand { display: flex; align-items: center; gap: 12px; color: var(--ink); text-decoration: none; }
+		.brand-mark { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 11px; background: var(--sea); color: #fff; }
+		.brand-mark svg { width: 21px; height: 21px; }
+		.brand-name { font: 800 15px Manrope, sans-serif; }
+		.brand-sub { display: block; margin-top: 2px; color: var(--muted); font: 500 10px "DM Mono", monospace; letter-spacing: .08em; }
+		.connection { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font: 500 11px "DM Mono", monospace; }
+		.status-dot { width: 8px; height: 8px; border-radius: 50%; background: #b7c2bd; }
+		.status-dot.online { background: #2b9b72; box-shadow: 0 0 0 3px #e2f3eb; }
+		.status-dot.busy { background: #d69b36; box-shadow: 0 0 0 3px #f8efdc; }
+		main { width: min(1380px, 92vw); margin: 0 auto; padding: 30px 0 48px; }
+		.intro { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 22px; }
+		.eyebrow { margin: 0 0 7px; color: var(--sea); font: 500 10px "DM Mono", monospace; letter-spacing: .14em; text-transform: uppercase; }
+		h1 { margin: 0; font: 800 clamp(24px, 3vw, 34px) Manrope, sans-serif; letter-spacing: 0; }
+		.intro-copy { max-width: 460px; margin: 9px 0 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
+		.updated { color: var(--muted); font: 11px "DM Mono", monospace; white-space: nowrap; }
+		.controls { display: grid; grid-template-columns: 1fr 1fr .85fr minmax(190px, 1.5fr) auto; align-items: end; gap: 12px; padding: 17px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); }
+		.field label { display: block; margin-bottom: 7px; color: var(--muted); font: 500 10px "DM Mono", monospace; letter-spacing: .06em; text-transform: uppercase; }
+		.field input { width: 100%; height: 42px; padding: 0 11px; border: 1px solid var(--line); border-radius: 5px; background: #090b0d; color: var(--ink); outline: none; font: 13px "DM Mono", monospace; }
+		.field input:focus { border-color: var(--sea); box-shadow: 0 0 0 3px rgba(49, 95, 128, .24); }
+		.field input::placeholder { color: #707984; }
+		.submit { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 42px; padding: 0 16px; border: 0; border-radius: 5px; background: var(--sea); color: white; font-size: 12px; font-weight: 700; transition: background .18s ease, transform .18s ease; white-space: nowrap; }
+		.submit:hover { background: var(--sea-dark); transform: translateY(-1px); }
+		.submit:disabled { opacity: .65; cursor: wait; transform: none; }
+		.submit svg { width: 16px; height: 16px; }
+		.error { display: none; margin: 12px 0 0; padding: 11px 13px; border: 1px solid #633631; border-radius: 5px; background: #211412; color: #f0a49a; font-size: 12px; line-height: 1.5; }
+		.error.visible { display: block; }
+		.summary { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; margin: 16px 0; }
+		.metric { min-height: 84px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); }
+		.metric-label { color: var(--muted); font: 500 10px "DM Mono", monospace; letter-spacing: .07em; text-transform: uppercase; }
+		.metric-value { margin-top: 8px; font: 800 21px Manrope, sans-serif; }
+		.metric-value.small { font-size: 13px; line-height: 1.45; }
+		.risk-value { display: flex; align-items: center; gap: 8px; }
+		.risk-pill, .level-pill { display: inline-flex; align-items: center; gap: 6px; width: fit-content; padding: 4px 8px; border-radius: 999px; font: 700 10px "DM Mono", monospace; text-transform: uppercase; }
+		.risk-pill.low, .level-pill.low { background: #e4f3e9; color: #216d48; }
+		.risk-pill.medium, .level-pill.medium { background: #fff2d8; color: #8b5d12; }
+		.risk-pill.high, .level-pill.high { background: #fde9df; color: #a34b2a; }
+		.risk-pill.very-high, .level-pill.very-high { background: #fbe3e5; color: #a12f3b; }
+		.risk-pill.critical, .level-pill.critical { background: #fbe3e5; color: #a12f3b; }
+		.workspace { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; align-items: stretch; }
+		.panel { overflow: hidden; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); box-shadow: var(--shadow); }
+		.panel-head { display: flex; align-items: center; justify-content: space-between; min-height: 52px; padding: 0 16px; border-bottom: 1px solid var(--line); }
+		.panel-title { margin: 0; font: 700 12px Manrope, sans-serif; }
+		.panel-meta { color: var(--muted); font: 10px "DM Mono", monospace; }
+		#map { min-height: 410px; height: min(52vh, 560px); background: #080a0c; }
+		.map-legend { display: flex; gap: 16px; padding: 10px 15px; border-top: 1px solid var(--line); color: var(--muted); font-size: 10px; }
+		.legend-item { display: inline-flex; align-items: center; gap: 6px; }
+		.legend-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--sea); }
+		.legend-dot.target { background: var(--coral); }
+		.legend-ring { width: 12px; height: 12px; border: 1px solid var(--sea); border-radius: 50%; background: rgba(23, 109, 101, .1); }
+		.table-wrap { overflow: visible; max-height: none; }
+		table { width: 100%; table-layout: fixed; border-collapse: collapse; text-align: left; }
+		th { padding: 10px 12px; background: #171a1d; color: var(--muted); font: 500 9px "DM Mono", monospace; letter-spacing: .06em; text-transform: uppercase; }
+		td { padding: 12px; border-top: 1px solid #edf1ed; font-size: 11px; white-space: normal; overflow-wrap: anywhere; vertical-align: top; }
+		th:nth-child(1), td:nth-child(1) { width: 30%; }
+		th:nth-child(2), td:nth-child(2) { width: 14%; }
+		th:nth-child(3), td:nth-child(3) { width: 38%; }
+		th:nth-child(4), td:nth-child(4) { width: 18%; }
+		tr:hover td { background: #181b1f; }
+		.ship-name { color: var(--ink); font-weight: 700; }
+		.subtext { display: block; margin-top: 3px; color: var(--muted); font: 9px "DM Mono", monospace; }
+		.movement { display: inline-flex; align-items: center; gap: 5px; color: var(--sea-dark); font-weight: 600; }
+		.movement.approaching { color: var(--coral); }
+		.empty { padding: 36px 20px; color: var(--muted); text-align: center; font-size: 12px; line-height: 1.6; }
+		.empty strong { display: block; margin-bottom: 6px; color: var(--ink); font: 700 13px Manrope, sans-serif; }
+		.note { display: flex; align-items: flex-start; gap: 9px; margin-top: 14px; padding: 12px 14px; border-left: 3px solid #a77a35; background: #1b1812; color: #c2b79e; font-size: 11px; line-height: 1.55; }
+		.note svg { flex: 0 0 auto; width: 15px; height: 15px; margin-top: 1px; }
+		footer { display: flex; justify-content: space-between; gap: 16px; padding: 18px 5vw; border-top: 1px solid var(--line); color: var(--muted); font: 10px "DM Mono", monospace; }
+		.ship-marker { display: grid; place-items: center; width: 27px; height: 27px; border: 2px solid #fff; border-radius: 50%; background: var(--sea); color: #fff; box-shadow: 0 2px 8px #183d3a66; font: 700 14px sans-serif; }
+		.ship-marker.high { background: var(--coral); }
+		.target-marker { display: grid; place-items: center; width: 30px; height: 30px; border: 2px solid #fff; border-radius: 50%; background: var(--coral); color: #fff; box-shadow: 0 2px 8px #183d3a66; }
+		.target-marker svg { width: 17px; height: 17px; }
+		.leaflet-popup-content-wrapper { border-radius: 6px; }
+		.popup-title { font: 700 12px Manrope, sans-serif; }
+		.popup-detail { margin-top: 5px; color: var(--muted); font: 10px "DM Mono", monospace; line-height: 1.5; }
+
+		@media (max-width: 920px) {
+			.controls { grid-template-columns: repeat(3, 1fr); }
+			.field.api-field { grid-column: span 2; }
+			.workspace { grid-template-columns: 1fr; }
+			#map { height: 420px; }
+		}
+		@media (max-width: 600px) {
+			.topbar { min-height: 60px; padding: 0 4vw; }
+			main { width: 92vw; padding-top: 22px; }
+			.intro { display: block; }
+			.updated { display: block; margin-top: 12px; }
+			.controls { grid-template-columns: 1fr 1fr; padding: 13px; }
+			.field.api-field { grid-column: span 2; }
+			.submit { grid-column: span 2; }
+			.summary { grid-template-columns: 1fr 1fr; gap: 8px; }
+			.metric { min-height: 76px; padding: 12px; }
+			.metric-value { font-size: 18px; }
+			#map { min-height: 330px; height: 44vh; }
+			.panel-head { padding: 0 12px; }
+			th, td { padding: 10px 9px; }
+			footer { flex-direction: column; padding: 15px 4vw; }
+		}
+		@media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; } }
+	</style>
+</head>
+<body>
+	<div class="shell">
+		<header class="topbar">
+			<a class="brand" href="#top" aria-label="Oceanova home">
+				<span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M3 14.5c2.4 0 2.4-2 4.8-2s2.4 2 4.8 2 2.4-2 4.8-2 2.4 2 4.8 2M4 18c2 0 2-1.5 4-1.5S10 18 12 18s2-1.5 4-1.5 2 1.5 4 1.5M12 3v6m-3-3 3 3 3-3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+				<span><span class="brand-name">OCEANOVA</span><span class="brand-sub">MARITIME MONITOR</span></span>
+			</a>
+			<div class="connection"><span class="status-dot" id="connectionDot"></span><span id="connectionText">API NOT CHECKED</span></div>
+		</header>
+
+		<main id="top">
+			<section class="intro">
+				<div>
+					<p class="eyebrow">AISstream · Live position sample</p>
+					<h1>Vessel activity monitor</h1>
+					<p class="intro-copy">Enter a location to inspect nearby vessel distance and direction.</p>
+				</div>
+				<div class="updated" id="updatedAt">Waiting for a location query</div>
+			</section>
+
+			<form class="controls" id="searchForm">
+				<div class="field">
+					<label for="latitude">Latitude</label>
+					<input id="latitude" name="lat" type="number" min="-90" max="90" step="any" value="1.3" required>
+				</div>
+				<div class="field">
+					<label for="longitude">Longitude</label>
+					<input id="longitude" name="lon" type="number" min="-180" max="180" step="any" value="103.8" required>
+				</div>
+				<div class="field">
+					<label for="radius">Search radius · km</label>
+					<input id="radius" name="radius" type="number" min="1" max="500" step="1" value="100" required>
+				</div>
+				<div class="field api-field">
+					<label for="apiBase">Backend API address</label>
+					<input id="apiBase" type="url" value="http://localhost:5001" placeholder="http://localhost:5001" required>
+				</div>
+				<button class="submit" id="searchButton" type="submit">
+					<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M10.8 18a7.2 7.2 0 1 1 0-14.4 7.2 7.2 0 0 1 0 14.4ZM16 16l4.2 4.2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+					<span id="buttonText">Search area</span>
+				</button>
+			</form>
+			<div class="error" id="errorBox" role="alert"></div>
+
+			<section class="workspace">
+				<article class="panel">
+					<div class="panel-head"><h2 class="panel-title">Position overview</h2><span class="panel-meta" id="mapMeta">TARGET AREA</span></div>
+					<div id="map" role="img" aria-label="Map showing search location and nearby vessels"></div>
+					<div class="map-legend"><span class="legend-item"><span class="legend-dot target"></span>Target</span><span class="legend-item"><span class="legend-dot"></span>Vessel</span><span class="legend-item"><span class="legend-ring"></span>Search radius</span></div>
+				</article>
+				<article class="panel">
+					<div class="panel-head"><h2 class="panel-title">Nearby vessels</h2><span class="panel-meta" id="tableMeta">0 RESULTS</span></div>
+					<div class="table-wrap" id="shipTableWrap">
+						<div class="empty"><strong>No search run yet</strong>Enter coordinates and search to see nearby AIS reports.</div>
+					</div>
+				</article>
+			</section>
+
+			<aside class="note">
+				<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 8v5m0 3h.01M10.3 3.9 2.8 17a2 2 0 0 0 1.7 3h15a2 2 0 0 0 1.7-3l-7.5-13.1a2 2 0 0 0-3.4 0Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+				<span>AIS vessel positions support distance and direction checks. AIS does not detect or confirm an oil spill.</span>
+			</aside>
+		</main>
+		<footer><span>OCEANOVA · AIS VESSEL ACTIVITY</span><span>Position sample is time-limited and may not include every vessel.</span></footer>
+	</div>
+
+	<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+	<script>
+		const $ = (selector) => document.querySelector(selector);
+		const form = $("#searchForm");
+		const button = $("#searchButton");
+		const errorBox = $("#errorBox");
+		const apiInput = $("#apiBase");
+		const esriTileUrl = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}";
+		let map;
+		let overlays = [];
+
+		function defaultApiBase() {
+			return "http://localhost:5001";
+		}
+
+		const defaultApi = defaultApiBase();
+		apiInput.value = defaultApi;
+		function initMap() {
+			if (!window.L) {
+				$("#map").innerHTML = '<div class="empty"><strong>Map library unavailable</strong>Ship details and risk summary can still load below.</div>';
+				return;
+			}
+			map = L.map("map", { zoomControl: true, scrollWheelZoom: true }).setView([1.3, 103.8], 7);
+			L.tileLayer(esriTileUrl, {
+				maxZoom: 23,
+				attribution: 'Sources: <a href="https://www.esri.com/">Esri</a>, HERE, Garmin, USGS, Intermap, INCREMENT P, NRCan, Esri Japan, METI, Esri China (Hong Kong), Esri Korea, Esri (Thailand), NGCC, &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>, and the GIS User Community'
+			}).addTo(map);
+		}
+
+		function icon(html, className, size) {
+			return L.divIcon({ html, className, iconSize: size, iconAnchor: [size[0] / 2, size[1] / 2] });
+		}
+
+		function escapeHtml(value) {
+			return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+				"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+			})[char]);
+		}
+
+		function levelClass(value) {
+			const normalized = String(value || "low").toLowerCase().replace(/\s+/g, "-");
+			return ["low", "medium", "high", "very-high", "critical"].includes(normalized) ? normalized : "low";
+		}
+
+		function setConnection(state, text) {
+			$("#connectionDot").className = `status-dot ${state}`;
+			$("#connectionText").textContent = text;
+		}
+
+		function updateMap(data) {
+			if (!map) return;
+			overlays.forEach((overlay) => map.removeLayer(overlay));
+			overlays = [];
+			const points = [];
+			const target = [Number(data.target.latitude), Number(data.target.longitude)];
+			const radius = Number(data.target.radius_km);
+
+			const ring = L.circle(target, {
+				radius: radius * 1000,
+				color: "#176d65",
+				weight: 1.5,
+				fillColor: "#42a795",
+				fillOpacity: 0.08
+			}).addTo(map);
+			const targetMarker = L.marker(target, {
+				icon: icon('<span class="target-marker"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="7" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg></span>', "", [30, 30])
+			}).bindPopup(`<div class="popup-title">Search target</div><div class="popup-detail">${target[0].toFixed(5)}, ${target[1].toFixed(5)}<br>Radius ${radius} km</div>`).addTo(map);
+			overlays.push(ring, targetMarker);
+			points.push(target);
+
+			for (const ship of data.ships || []) {
+				const location = [Number(ship.latitude), Number(ship.longitude)];
+				if (!Number.isFinite(location[0]) || !Number.isFinite(location[1])) continue;
+				const vesselName = escapeHtml(ship.name || "Unknown vessel");
+				const distance = Number(ship.distance_km) || 0;
+				const course = Math.round(Number(ship.course_degrees) || 0);
+				const targetBearing = Math.round(Number(ship.direction_to_target) || 0);
+				const directionRelation = ship.direction_relation || (ship.approaching_target ? "Toward target" : "Not toward target");
+				const marker = L.marker(location, {
+					icon: icon('<span class="ship-marker">›</span>', "", [27, 27]),
+					rotationAngle: Number(ship.course_degrees) || 0
+				}).bindPopup(`<div class="popup-title">${vesselName}</div><div class="popup-detail">${distance.toFixed(1)} km · ${escapeHtml(directionRelation)}<br>Course ${course}° · target bearing ${targetBearing}°</div>`).addTo(map);
+				overlays.push(marker);
+				points.push(location);
+			}
+
+			if (points.length > 1) map.fitBounds(L.latLngBounds(points).pad(0.18), { maxZoom: 12 });
+			else map.fitBounds(ring.getBounds(), { maxZoom: 10 });
+			$("#mapMeta").textContent = `${radius} KM SEARCH RADIUS`;
+		}
+
+		function renderTable(ships) {
+			const tableWrap = $("#shipTableWrap");
+			$("#tableMeta").textContent = `${ships.length} ${ships.length === 1 ? "RESULT" : "RESULTS"}`;
+			if (!ships.length) {
+				tableWrap.innerHTML = '<div class="empty"><strong>No vessels reported nearby</strong>Try a larger radius or another location. AIS coverage and report timing vary.</div>';
+				return;
+			}
+			tableWrap.innerHTML = `<table><thead><tr><th>Vessel</th><th>Distance</th><th>Ship direction</th><th>Risk</th></tr></thead><tbody>${ships.map((ship) => {
+				const vesselName = escapeHtml(ship.name || "Unknown vessel");
+				const vesselDetails = `MMSI ${escapeHtml(ship.mmsi || "—")} · ${escapeHtml(ship.vessel_type || "Type unknown")}`;
+				const approaching = Boolean(ship.approaching_target);
+				const direction = Math.round(Number(ship.course_degrees) || 0);
+				const targetBearing = Math.round(Number(ship.direction_to_target) || 0);
+				const directionRelation = ship.direction_relation || (approaching ? "Toward target" : "Not toward target");
+				const riskLabel = String(ship.danger_level || "LOW").toUpperCase();
+				const riskClass = ["LOW", "MEDIUM", "HIGH", "VERY HIGH", "CRITICAL"].includes(riskLabel) ? riskLabel.toLowerCase().replace(/\s+/g, "-") : "low";
+				return `<tr>
+					<td><span class="ship-name">${vesselName}</span><span class="subtext">${vesselDetails}</span></td>
+					<td>${Number(ship.distance_km).toFixed(1)} km</td>
+					<td><span class="movement ${approaching ? "approaching" : ""}">${escapeHtml(directionRelation)}</span><span class="subtext">Course ${direction}° · target bearing ${targetBearing}° · ${Number(ship.speed_knots || 0).toFixed(1)} kn</span></td>
+					<td><span class="level-pill ${riskClass}">${escapeHtml(riskLabel)}</span><span class="subtext">Score ${Number(ship.risk_score) || 0}</span></td>
+				</tr>`;
+			}).join("")}</tbody></table>`;
+		}
+
+		function renderResults(data) {
+			$("#updatedAt").textContent = data.updated_at ? `UPDATED ${new Date(data.updated_at).toLocaleTimeString()}` : "UPDATED JUST NOW";
+			renderTable(data.ships || []);
+			updateMap(data);
+			const streamStatus = data.stream_status?.status;
+			if (!(data.ships || []).length) {
+				setConnection("busy", "NO LOCAL AIS REPORTS");
+			} else if (streamStatus === "connected") {
+				setConnection("online", "AISSTREAM LIVE");
+			} else if (streamStatus === "reconnecting") {
+				setConnection("busy", "AISSTREAM RETRYING");
+			} else {
+				setConnection("busy", "AISSTREAM CONNECTING");
+			}
+		}
+
+		form.addEventListener("submit", async (event) => {
+			event.preventDefault();
+			errorBox.classList.remove("visible");
+			const lat = Number($("#latitude").value);
+			const lon = Number($("#longitude").value);
+			const radius = Number($("#radius").value);
+			const apiBase = ["localhost", "127.0.0.1", ""].includes(window.location.hostname)
+				? "http://localhost:5001"
+				: apiInput.value.trim().replace(/\/+$/, "");
+
+			if (!Number.isFinite(lat) || lat < -90 || lat > 90 || !Number.isFinite(lon) || lon < -180 || lon > 180) {
+				errorBox.textContent = "Enter a latitude between -90 and 90 and a longitude between -180 and 180.";
+				errorBox.classList.add("visible");
+				return;
+			}
+			if (!Number.isFinite(radius) || radius < 1 || radius > 500) {
+				errorBox.textContent = "Search radius must be between 1 and 500 km.";
+				errorBox.classList.add("visible");
+				return;
+			}
+			updateMap({
+				target: { latitude: lat, longitude: lon, radius_km: radius },
+				ships: []
+			});
+
+			localStorage.setItem("bluewatch-api-base", apiBase);
+			button.disabled = true;
+			$("#buttonText").textContent = "Receiving AIS…";
+			setConnection("busy", "QUERYING AISSTREAM");
+			$("#updatedAt").textContent = "Listening for position reports…";
+
+			try {
+				const query = new URLSearchParams({ lat: String(lat), lon: String(lon), radius: String(radius) });
+				const response = await fetch(`${apiBase}/api/ships?${query}`, { headers: { Accept: "application/json" } });
+				const contentType = response.headers.get("content-type") || "";
+				if (!contentType.includes("application/json")) {
+					throw new Error(response.status === 404
+						? `Backend endpoint not found at ${apiBase}/api/ships. Restart this project's Flask backend on port 5001.`
+						: `Backend returned a non-JSON response (HTTP ${response.status})`);
+				}
+				const data = await response.json();
+				if (response.status === 502 && /AISstream connection failed/i.test(data.error || "")) {
+					setConnection("online", "API CONNECTED");
+					throw new Error(`Backend is connected, but AISstream could not be reached: ${data.error}`);
+				}
+				if (!response.ok || !data.success) throw new Error(data.error || `Request failed (HTTP ${response.status})`);
+				renderResults(data);
+			} catch (error) {
+				if (!errorBox.textContent.startsWith("Backend is connected")) {
+					setConnection("", "API UNAVAILABLE");
+				}
+				errorBox.textContent = `${error.message}. Confirm the backend is running at ${apiBase}, its AISstream key is configured, and the browser can reach that address.`;
+				errorBox.classList.add("visible");
+			} finally {
+				button.disabled = false;
+				$("#buttonText").textContent = "Search area";
+			}
+		});
+
+		const queryParameters = new URLSearchParams(window.location.search);
+		const latitudeParameter = queryParameters.get("lat");
+		const longitudeParameter = queryParameters.get("lon");
+		let submitInitialSearch = true;
+
+		if (latitudeParameter !== null || longitudeParameter !== null) {
+			const latitude = Number(latitudeParameter);
+			const longitude = Number(longitudeParameter);
+			const validCoordinates = latitudeParameter !== null &&
+				longitudeParameter !== null &&
+				Number.isFinite(latitude) && latitude >= -90 && latitude <= 90 &&
+				Number.isFinite(longitude) && longitude >= -180 && longitude <= 180;
+
+			if (validCoordinates) {
+				$("#latitude").value = String(latitude);
+				$("#longitude").value = String(longitude);
+			} else {
+				$("#latitude").value = "";
+				$("#longitude").value = "";
+				errorBox.textContent = "The latitude and longitude received from the spill analysis are invalid.";
+				errorBox.classList.add("visible");
+				submitInitialSearch = false;
+			}
+		}
+
+		initMap();
+		if (submitInitialSearch) form.requestSubmit();
+	</script>
+</body>
+</html>

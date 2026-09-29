@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>OCEANOVA — Login</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div class="stars"></div>
+    <div class="stars stars-two"></div>
+
+    <main class="page">
+
+        <section class="login-panel">
+
+            <div class="brand">
+                <div class="brand-name">OCEANOVA</div>
+                <div class="brand-line"></div>
+                <div class="system-label">OCEAN SAR SYSTEM</div>
+            </div>
+
+            <div class="form-area">
+
+                <p class="eyebrow">SYSTEM ACCESS</p>
+
+                <h1>Welcome back.</h1>
+
+                <p class="description">
+                    Sign in to continue monitoring your ocean data.
+                </p>
+
+                <form id="loginForm">
+
+                    <div class="field">
+                        <label for="email">EMAIL</label>
+                        <input
+                            type="email"
+                            id="email"
+                            name="email"
+                            placeholder="Enter your email"
+                            autocomplete="email"
+                            required
+                        >
+                    </div>
+
+                    <div class="field">
+                        <label for="password">PASSWORD</label>
+
+                        <div class="password-box">
+                            <input
+                                type="password"
+                                id="password"
+                                name="password"
+                                placeholder="Enter your password"
+                                autocomplete="current-password"
+                                required
+                            >
+
+                            <button
+                                type="button"
+                                id="togglePassword"
+                                aria-label="Show password"
+                            >
+                                SHOW
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="options">
+                        <label class="remember">
+                            <input type="checkbox" id="remember">
+                            <span>Remember me</span>
+                        </label>
+
+                        <a href="#" class="forgot">
+                            Forgot password?
+                        </a>
+                    </div>
+
+                    <button type="submit" class="login-button">
+                        <span>LOGIN</span>
+                        <span class="arrow">→</span>
+                    </button>
+
+                    <p id="message"></p>
+
+                </form>
+
+                <section id="resetPanel" class="reset-panel" hidden>
+                    <div class="reset-heading">
+                        <span>SECURE ACCOUNT RESET</span>
+                        <button type="button" id="resetCancel" aria-label="Close password reset">×</button>
+                    </div>
+
+                    <form id="resetForm">
+                        <label for="resetEmail">REGISTERED EMAIL</label>
+                        <input type="email" id="resetEmail" placeholder="Enter your registered email" required>
+
+                        <label for="resetPassword">NEW PASSWORD</label>
+                        <input type="password" id="resetPassword" placeholder="At least 8 characters" minlength="8" required>
+
+                        <button type="submit" class="reset-button">RESET PASSWORD</button>
+                        <p id="resetMessage"></p>
+                    </form>
+                </section>
+
+                <div class="register-link">
+                    <span>NOT REGISTERED?</span>
+                    <a href="../register/index.html">CREATE ACCOUNT</a>
+                </div>
+
+            </div>
+
+            <div class="system-status">
+                <span class="status-dot"></span>
+                SYSTEM ONLINE
+            </div>
+
+        </section>
+
+        <section class="space-info">
+
+            <div class="hud-top">
+                <span>OCEAN SAR SCAN</span>
+                <span>NO. 07</span>
+            </div>
+
+            <div class="hud-center">
+                <div class="radar" aria-label="Active ocean SAR radar">
+                    <div class="radar-grid"></div>
+                    <div class="radar-sweep"></div>
+                    <span class="radar-blip radar-blip-one"></span>
+                    <span class="radar-blip radar-blip-two"></span>
+                    <span class="radar-blip radar-blip-three"></span>
+                </div>
+
+                <div class="orbit-ring"></div>
+
+                <div class="coordinates">
+                    09° 18' N<br>
+                    76° 27' E
+                </div>
+
+                <div class="hologram-earth" aria-label="Holographic Earth with orbiting satellite">
+                    <div class="earth-grid"></div>
+                    <div class="earth-highlight"></div>
+                    <div class="satellite-track">
+                        <div class="satellite">
+                            <span class="satellite-body"></span>
+                            <span class="satellite-panel satellite-panel-left"></span>
+                            <span class="satellite-panel satellite-panel-right"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hud-bottom">
+                <span>SATELLITE ORBIT</span>
+                <span>ACTIVE</span>
+            </div>
+
+        </section>
+
+    </main>
+
+    <script src="SCRIPT.JS"></script>
+
+</body>
+</html>

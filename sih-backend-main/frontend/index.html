@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>OCEANOVA - Nearby Oil Spill Sources</title>
+
+    <!-- Cesium 3D Earth -->
+    <link
+        href="https://cesium.com/downloads/cesiumjs/releases/1.135/Build/Cesium/Widgets/widgets.css"
+        rel="stylesheet"
+    >
+
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.135/Build/Cesium/Cesium.js"></script>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- Real 3D Earth -->
+    <div id="cesiumContainer"></div>
+
+    <!-- Dark space/Earth overlay -->
+    <div class="dark-overlay"></div>
+
+    <div class="app">
+
+        <!-- TOP BAR -->
+        <header class="topbar">
+
+            <div>
+                <div class="logo">
+                    OCEANOVA
+                </div>
+
+                <div class="subtitle">
+                    Location Risk Analysis
+                </div>
+            </div>
+
+            <div class="status">
+                <span class="status-dot"></span>
+                <span id="statusText">SYSTEM READY</span>
+            </div>
+
+        </header>
+
+
+        <!-- SEARCH PANEL -->
+        <main class="panel">
+
+            <div class="section-label">
+                LOCATION ANALYSIS
+            </div>
+
+            <h1>
+                Find Nearby Risk
+            </h1>
+
+            <p class="description">
+                Enter the latitude and longitude for the location to find
+                nearby oil-spill sources on the 3D Earth.
+            </p>
+
+
+            <div class="form-group">
+                <label for="latitudeInput">LATITUDE</label>
+                <input id="latitudeInput" type="number" step="any" min="-90" max="90" placeholder="e.g. 9.931233" required>
+            </div>
+
+            <div class="form-group">
+                <label for="longitudeInput">LONGITUDE</label>
+                <input id="longitudeInput" type="number" step="any" min="-180" max="180" placeholder="e.g. 76.267303" required>
+            </div>
+
+            <div class="form-group">
+                <label for="radiusInput">SEARCH RADIUS</label>
+                <div class="radius-row">
+                    <input id="radiusInput" type="number" step="any" min="0.001" max="200" value="200" required>
+                    <span>KM (MAX 200)</span>
+                </div>
+            </div>
+
+
+            <!-- BUTTON -->
+            <button id="analyzeBtn">
+                ANALYZE LOCATION →
+            </button>
+
+
+            <!-- RESULT -->
+            <div id="resultBox" class="result-box">
+
+                <div class="result-title">
+                    READY FOR ANALYSIS
+                </div>
+
+                <div id="resultText">
+                    Enter latitude and longitude, then click Analyze Location.
+                </div>
+
+            </div>
+
+
+            <!-- LEGEND -->
+            <div class="legend">
+
+                <div>
+                    <span class="legend-marker green"></span>
+                    Searched Location
+                </div>
+
+                <div>
+                    <span class="legend-marker red"></span>
+                    Potential Spill-Source Candidate
+                </div>
+
+            </div>
+
+        </main>
+
+
+        <!-- COORDINATES -->
+        <div
+            class="coordinates"
+            id="coordinates"
+        >
+            LAT: -- &nbsp;&nbsp; LNG: --
+        </div>
+
+    </div>
+
+
+    <script src="script.js?v=geoapify-error-details-1"></script>
+
+</body>
+</html>

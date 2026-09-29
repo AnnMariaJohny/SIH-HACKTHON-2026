@@ -1,0 +1,13 @@
+{
+  "model": "Garcia-INPE boundary-aware U-Net",
+  "dataset": "Garcia-INPE Oil Spill Dataset",
+  "split": "held-out test",
+  "scenes": 22,
+  "threshold": 0.96,
+  "precision": 0.8605,
+  "recall": 0.4487,
+  "iou": 0.4183,
+  "dice": 0.5899,
+  "pixel_accuracy": 0.9932,
+  "pixel_accuracy_note": "Calculated to two decimals for the 22 held-out 800x600 scenes. The matching split IDs have 115125 ground-truth oil pixels across 10560000 total pixels. Using the final micro-averaged precision and recall reported to four decimals yields a pixel-accuracy range of 99.3196% to 99.3198%; every feasible confusion-count pair rounds to 99.32%."
+}
