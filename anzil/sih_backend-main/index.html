@@ -236,7 +236,7 @@
 		let overlays = [];
 
 		function defaultApiBase() {
-			return window.OCEANOVA_ENDPOINTS?.vessel || "http://localhost:5001";
+			return window.OCEANOVA_ENDPOINTS?.vessel ?? "http://localhost:5001";
 		}
 
 		const defaultApi = defaultApiBase();
@@ -441,7 +441,13 @@
 		}
 
 		initMap();
-		if (submitInitialSearch) form.requestSubmit();
+		if (submitInitialSearch && defaultApi) {
+			form.requestSubmit();
+		} else if (submitInitialSearch) {
+			setConnection("", "API NOT CONFIGURED");
+			errorBox.textContent = "Vessel search is not connected yet. Add OCEANOVA_VESSEL_URL in Vercel after deploying the Railway API.";
+			errorBox.classList.add("visible");
+		}
 	</script>
 </body>
 </html>

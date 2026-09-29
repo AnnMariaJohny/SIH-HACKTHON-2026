@@ -27,7 +27,7 @@ const coordinatesText =
 
 
 const API_BASE_URL =
-    window.OCEANOVA_ENDPOINTS?.industry || "http://127.0.0.1:5000";
+    window.OCEANOVA_ENDPOINTS?.industry ?? "http://127.0.0.1:5000";
 
 const MAX_SEARCH_RADIUS_METERS =
     200000;
@@ -806,6 +806,12 @@ async function findNearbyIndustries(
 analyzeBtn.addEventListener(
     "click",
     async () => {
+
+        if (!API_BASE_URL) {
+            resultText.textContent = "Industry search is not connected yet. Add OCEANOVA_INDUSTRY_URL in Vercel after deploying the Railway API.";
+            statusText.textContent = "API NOT CONFIGURED";
+            return;
+        }
 
         const latitude = Number(latitudeInput.value);
         const longitude = Number(longitudeInput.value);

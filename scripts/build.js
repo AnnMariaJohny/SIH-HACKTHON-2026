@@ -14,19 +14,19 @@ const localEndpoints = {
     vessel: "http://127.0.0.1:5001"
 };
 
-if (process.env.VERCEL) {
-    const missing = Object.values(endpointVariables).filter((name) => !process.env[name]);
-    if (missing.length) {
-        throw new Error(`Set these Vercel environment variables before deploying: ${missing.join(", ")}`);
-    }
-}
-
 const endpoints = Object.fromEntries(
     Object.entries(endpointVariables).map(([service, variable]) => [
         service,
-        (process.env[variable] || localEndpoints[service]).replace(/\/+$/, "")
+        (process.env[variable] || (process.env.VERCEL ? "" : localEndpoints[service])).replace(/\/+$/, "")
     ])
 );
+
+if (process.env.VERCEL) {
+    const missing = Object.values(endpointVariables).filter((name) => !process.env[name]);
+    if (missing.length) {
+        console.warn(`Backend APIs are not connected yet. Configure in Vercel when ready: ${missing.join(", ")}`);
+    }
+}
 
 const files = [
     ["index.html", "index.html"],
