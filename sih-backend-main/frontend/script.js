@@ -27,7 +27,7 @@ const coordinatesText =
 
 
 const API_BASE_URL =
-    window.OCEANOVA_ENDPOINTS?.industry ?? `${window.location.origin}/industry-api`;
+    window.OCEANOVA_ENDPOINTS?.industry ?? `https://sih-hackthon-2026-1.onrender.com/api`;
 
 const MAX_SEARCH_RADIUS_METERS =
     200000;
@@ -763,18 +763,7 @@ async function findNearbyIndustries(
 
     const response =
         await fetch(
-            API_BASE_URL + "/nearby-industries",
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    latitude,
-                    longitude,
-                    radius
-                })
-            }
+            `${API_BASE_URL}/nearby-industries?lat=${latitude}&lon=${longitude}&radius_km=${radius / 1000}`
         );
 
 
