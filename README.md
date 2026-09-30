@@ -2,6 +2,8 @@
 
 This folder contains the OCEANOVA welcome, login, analysis, industry, and vessel screens, with one launcher for the local services.
 
+Link for the prototype: https://oceanova.vercel.app/
+
 ## Requirements
 
 - Windows with Python 3.11 or newer.
