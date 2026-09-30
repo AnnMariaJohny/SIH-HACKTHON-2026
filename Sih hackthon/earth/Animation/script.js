@@ -213,55 +213,106 @@ earthGroup.add(earth);
 
 function createSatellite() {
     const satellite = new THREE.Group();
-    const gold = new THREE.MeshStandardMaterial({ color: 0xc5a46a, metalness: 0.62, roughness: 0.4 });
-    const silver = new THREE.MeshStandardMaterial({ color: 0xd8e0e3, metalness: 0.58, roughness: 0.32 });
-    const panel = new THREE.MeshStandardMaterial({ color: 0x174b76, metalness: 0.38, roughness: 0.34, emissive: 0x071522, emissiveIntensity: 0.12 });
-    const addBox = (size, position, material) => {
-        const mesh = new THREE.Mesh(new THREE.BoxGeometry(...size), material);
-        mesh.position.set(...position);
+    
+    // Materials
+    const goldFoil = new THREE.MeshStandardMaterial({ 
+        color: 0xffb700, 
+        metalness: 0.8, 
+        roughness: 0.35, 
+        bumpScale: 0.02
+    });
+    
+    // Create a procedural bump map for the gold foil
+    const canvas = document.createElement('canvas');
+    canvas.width = 256; canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+    for(let i = 0; i < 256; i++) {
+        for(let j = 0; j < 256; j++) {
+            const val = Math.floor(Math.random() * 255);
+            ctx.fillStyle = `rgb(${val},${val},${val})`;
+            ctx.fillRect(i, j, 1, 1);
+        }
+    }
+    const foilTex = new THREE.CanvasTexture(canvas);
+    foilTex.wrapS = THREE.RepeatWrapping;
+    foilTex.wrapT = THREE.RepeatWrapping;
+    foilTex.repeat.set(4, 4);
+    goldFoil.bumpMap = foilTex;
+
+    const silver = new THREE.MeshStandardMaterial({ color: 0xe0e5e9, metalness: 0.9, roughness: 0.2 });
+    const darkMetal = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.7, roughness: 0.5 });
+    
+    const panelMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0x0a1d3a, 
+        metalness: 0.6, 
+        roughness: 0.1, 
+        emissive: 0x051020, 
+        emissiveIntensity: 0.2 
+    });
+
+    const addMesh = (geom, mat, pos, rot = [0,0,0]) => {
+        const mesh = new THREE.Mesh(geom, mat);
+        mesh.position.set(...pos);
+        mesh.rotation.set(...rot);
         satellite.add(mesh);
         return mesh;
     };
 
-    addBox([0.38, 0.32, 0.3], [0, 0, 0], gold);
-    addBox([0.3, 0.22, 0.018], [0, 0, 0.16], silver);
-    addBox([0.2, 0.025, 0.025], [0, -0.09, 0.18], gold);
-    for (const side of [-1, 1]) {
-        addBox([0.025, 0.28, 0.018], [side * 0.19, 0, 0.165], gold);
-        addBox([0.24, 0.018, 0.018], [0, side * 0.14, 0.165], gold);
-    }
+    // Main Body (Hexagonal Cylinder)
+    addMesh(new THREE.CylinderGeometry(0.25, 0.25, 0.5, 6), goldFoil, [0, 0, 0], [Math.PI/2, Math.PI/2, 0]);
+    
+    // End caps
+    addMesh(new THREE.CylinderGeometry(0.22, 0.22, 0.52, 6), darkMetal, [0, 0, 0], [Math.PI/2, Math.PI/2, 0]);
 
+    // Antennas & Instruments on body
+    addMesh(new THREE.BoxGeometry(0.1, 0.1, 0.1), silver, [0, 0.2, 0.15]);
+    addMesh(new THREE.CylinderGeometry(0.02, 0.02, 0.2, 8), silver, [0, 0.3, 0.15]); // Top antenna
+    addMesh(new THREE.CylinderGeometry(0.04, 0.08, 0.15, 8), darkMetal, [-0.15, 0.15, 0.2], [0, 0, Math.PI/4]); // Star tracker
+    addMesh(new THREE.CylinderGeometry(0.04, 0.08, 0.15, 8), darkMetal, [0.15, 0.15, 0.2], [0, 0, -Math.PI/4]); // Star tracker
+
+    // Huge Solar Panels
     for (const direction of [-1, 1]) {
-        const centerX = direction * 0.76;
-        addBox([0.76, 0.42, 0.025], [centerX, 0, 0], panel);
+        // Boom
+        addMesh(new THREE.CylinderGeometry(0.015, 0.015, 0.4, 8), silver, [direction * 0.4, 0, 0], [0, 0, Math.PI / 2]);
 
-        const grid = [];
-        for (let column = 0; column <= 4; column++) {
-            const x = centerX - 0.38 + column * 0.19;
-            grid.push(x, -0.21, 0.016, x, 0.21, 0.016);
+        // Panel Base
+        const panelGroup = new THREE.Group();
+        panelGroup.position.set(direction * 1.05, 0, 0);
+        
+        // 3 segments of solar panels
+        for (let seg = -1; seg <= 1; seg++) {
+            const segX = seg * 0.42;
+            const pMesh = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.6, 0.02), panelMaterial);
+            pMesh.position.set(segX, 0, 0);
+            panelGroup.add(pMesh);
+            
+            // Grid lines on panel
+            const grid = [];
+            for (let column = -3; column <= 3; column++) {
+                const x = segX + column * (0.4/7);
+                grid.push(x, -0.3, 0.012, x, 0.3, 0.012);
+            }
+            for (let row = -5; row <= 5; row++) {
+                const y = row * (0.6/11);
+                grid.push(segX - 0.2, y, 0.012, segX + 0.2, y, 0.012);
+            }
+            const gridGeom = new THREE.BufferGeometry();
+            gridGeom.setAttribute("position", new THREE.Float32BufferAttribute(grid, 3));
+            panelGroup.add(new THREE.LineSegments(gridGeom, new THREE.LineBasicMaterial({ color: 0x8bbbd5, transparent: true, opacity: 0.5 })));
         }
-        for (let row = 0; row <= 3; row++) {
-            const y = -0.21 + row * 0.14;
-            grid.push(centerX - 0.38, y, 0.016, centerX + 0.38, y, 0.016);
-        }
-        const gridGeometry = new THREE.BufferGeometry();
-        gridGeometry.setAttribute("position", new THREE.Float32BufferAttribute(grid, 3));
-        satellite.add(new THREE.LineSegments(gridGeometry, new THREE.LineBasicMaterial({ color: 0x8bbbd5 })));
-
-        const boom = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.38, 8), silver);
-        boom.rotation.z = Math.PI / 2;
-        boom.position.x = direction * 0.39;
-        satellite.add(boom);
+        
+        satellite.add(panelGroup);
     }
 
-    const dishRadius = 0.14;
+    // Main Dish Antenna (Communication)
+    const dishRadius = 0.22;
     const dishPositions = [];
     const dishIndices = [];
-    const rings = 8;
-    const segments = 32;
+    const rings = 12;
+    const segments = 48;
     for (let ring = 0; ring <= rings; ring++) {
         const radius = dishRadius * ring / rings;
-        const depth = -0.025 * (radius / dishRadius) ** 2;
+        const depth = -0.06 * (radius / dishRadius) ** 2;
         for (let segment = 0; segment <= segments; segment++) {
             const angle = segment / segments * Math.PI * 2;
             dishPositions.push(Math.cos(angle) * radius, Math.sin(angle) * radius, depth);
@@ -279,20 +330,31 @@ function createSatellite() {
     dishGeometry.setIndex(dishIndices);
     dishGeometry.computeVertexNormals();
 
-    const dish = new THREE.Mesh(
-        dishGeometry,
-        new THREE.MeshStandardMaterial({ color: 0xe0e5e7, metalness: 0.36, roughness: 0.42, side: THREE.DoubleSide })
-    );
-    dish.rotation.y = -0.2;
-    dish.position.set(-0.1, 0.27, 0.2);
-    satellite.add(dish);
+    const dishGroup = new THREE.Group();
+    dishGroup.position.set(0, -0.2, 0.25);
+    dishGroup.rotation.set(-0.4, 0, 0);
 
-    const rim = new THREE.Mesh(new THREE.TorusGeometry(dishRadius, 0.01, 8, 28), silver);
-    rim.rotation.y = -0.2;
-    rim.position.copy(dish.position);
-    satellite.add(rim);
+    const dishMesh = new THREE.Mesh(dishGeometry, new THREE.MeshStandardMaterial({ color: 0xf0f5f9, metalness: 0.2, roughness: 0.5, side: THREE.DoubleSide }));
+    dishGroup.add(dishMesh);
+    
+    // Dish feed horn
+    const feedHorn = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.02, 0.15, 8), darkMetal);
+    feedHorn.position.set(0, 0, 0.075);
+    feedHorn.rotation.set(Math.PI/2, 0, 0);
+    dishGroup.add(feedHorn);
 
-    satellite.scale.setScalar(0.45);
+    // Feed horn supports
+    for(let i=0; i<3; i++) {
+        const angle = i * Math.PI * 2 / 3;
+        const support = new THREE.Mesh(new THREE.CylinderGeometry(0.002, 0.002, 0.18), silver);
+        support.position.set(Math.cos(angle) * 0.05, Math.sin(angle) * 0.05, 0.035);
+        support.lookAt(0,0,0.15);
+        dishGroup.add(support);
+    }
+
+    satellite.add(dishGroup);
+
+    satellite.scale.setScalar(0.35);
     scene.add(satellite);
     return satellite;
 }
