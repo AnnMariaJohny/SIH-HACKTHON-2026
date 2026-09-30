@@ -268,7 +268,7 @@ out center tags;"""
             response.raise_for_status()
             payload = response.json()
     except (httpx.HTTPError, json.JSONDecodeError) as exc:
-        raise HTTPException(502, "The OpenStreetMap facility search is temporarily unavailable. Please try again.") from exc
+        raise HTTPException(502, f"The OpenStreetMap facility search is temporarily unavailable. Error: {type(exc).__name__} {exc}") from exc
 
     results = []
     for element in payload.get("elements", []):
@@ -363,7 +363,7 @@ async def nearby_vessels(lat: float, lon: float, radius_km: float = 25):
                 if ship.get("latitude") is not None and ship.get("longitude") is not None:
                     ship["distance_km"] = round(distance_km(lat, lon, float(ship["latitude"]), float(ship["longitude"])), 2)
     except (OSError, websockets.WebSocketException, json.JSONDecodeError, asyncio.TimeoutError) as exc:
-        raise HTTPException(502, "The live AIS vessel search is temporarily unavailable. Please try again.") from exc
+        raise HTTPException(502, f"The live AIS vessel search is temporarily unavailable. Error: {type(exc).__name__} {exc}") from exc
 
     results = [ship for ship in ships.values()
                if ship.get("distance_km") is not None and ship["distance_km"] <= radius_km]
