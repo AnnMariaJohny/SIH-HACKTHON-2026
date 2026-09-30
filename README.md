@@ -4,6 +4,35 @@ This folder contains the OCEANOVA welcome, login, analysis, industry, and vessel
 
 Link for the prototype: https://oceanova.vercel.app/
 
+(For analysing image, it takes upto 4-5 minutes to get output because we hosted Backend on Render and Frontend on Vercel so Backend takes more time to call fro Render)
+
+## Research & Accuracy Interpretation
+
+OCEANOVA follows established research in SAR-based oil-spill segmentation,
+where deep-learning models such as U-Net are used to identify oil-spill
+regions at pixel level. Research shows that SAR oil-spill datasets have a
+strong class imbalance because oil slicks occupy only a small portion of an
+image, while most pixels represent sea/background. Bianchi et al. (2020)
+reported that a model could achieve approximately 98% accuracy by predicting
+the dominant non-oil class, demonstrating why pixel accuracy alone can be
+misleading. Recent research such as OilSpillNet also recommends metrics such
+as Balanced Accuracy, IoU and Dice for imbalanced oil-spill segmentation.
+
+OCEANOVA was evaluated on 22 unseen Garcia-INPE test scenes and achieved:
+
+- Pixel Accuracy: 99.32%
+- Precision: 86.05%
+- Recall: 44.87%
+- IoU: 41.83%
+- Dice/F1: 58.99%
+
+The 99.32% value represents overall pixel accuracy, not oil-spill detection
+accuracy. It is high because the majority of image pixels belong to the
+background/sea class. Therefore, correctly identifying background pixels
+contributes heavily to the overall accuracy, even when some oil pixels are
+missed. Precision, Recall, IoU and Dice provide a more meaningful view of
+actual oil-spill segmentation performance.
+
 ## Requirements
 
 - Windows with Python 3.11 or newer.
