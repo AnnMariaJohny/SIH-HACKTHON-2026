@@ -203,14 +203,14 @@ function initializeEarth() {
         );
 
 
-    // Start camera above Earth
+    // Start camera completely zoomed out showing full Earth
     viewer.camera.setView({
 
         destination:
             Cesium.Cartesian3.fromDegrees(
                 78.9629,
                 20.5937,
-                8000000
+                25000000 // Zoomed out to show the whole globe
             )
     });
 
