@@ -1,84 +1,34 @@
 # OCEANOVA — quick start
 
-This folder contains the OCEANOVA upload page and the local service that analyzes SAR GeoTIFF images.
+This folder contains the OCEANOVA welcome, login, analysis, industry, and vessel screens, with one launcher for the local services.
 
 ## Requirements
 
 - Windows with Python 3.11 or newer.
 - Internet access for first-run package installation and live industry/vessel data.
-- A Geoapify API key for industry searches and an AISStream API key for vessel searches.
+- Geoapify and AISStream API keys configured in the existing local `.env` files.
 
 ## Start the app
 
-The app uses three local services. Start each in its own PowerShell window from the project root and leave all three running while using the app.
+Double-click `start-oceanova.bat`. On first run it installs the dependencies and starts one FastAPI server on port `8000`. Welcome, Login/Register, Analysis, Industry, Vessel, and all API requests use that port. Open **http://127.0.0.1:8000** to begin; press Ctrl+C in the launcher window to stop the app.
 
-### 1. SAR analysis and main page
+The Geoapify and AISStream keys are read from the local `.env` files in `sih-backend-main/sih-backend-main/bakend/` and `anzil/sih_backend-main/backend/`. Use each folder's `.env.example` as a template if a key is not configured; do not commit API keys.
 
-Double-click `start-oceanova.bat`. On first run it installs Python packages, including PyTorch, and loads the bundled model. Open **http://127.0.0.1:8000** after the terminal reports that Uvicorn is running.
-
-### 2. Nearby industry API
-
-In a second PowerShell window:
-
-```powershell
-Set-Location .\sih-backend-main\sih-backend-main\bakend
-$env:GEOAPIFY_API_KEY = "your Geoapify API key"
-py -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-.\.venv\Scripts\python.exe app.py
-```
-
-This API listens on port `5000`. Set the key in this PowerShell session before starting the service; do not commit API keys to the repository.
-
-### 3. Nearby vessel API
-
-In a third PowerShell window:
-
-```powershell
-Set-Location .\anzil\sih_backend-main\backend
-py -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-.\.venv\Scripts\python.exe app.py
-```
-
-Configure `AISSTREAM_API_KEY` in `anzil/sih_backend-main/backend/.env` using `.env.example` as a template. This API listens on port `5001`.
-
-Do not open `index.html` directly. Use **http://127.0.0.1:8000** so the browser can reach the local services. Choose a `.tif` or `.tiff` SAR image and click **Analyze image**. Keep all service windows open; press Ctrl+C in each one to stop its service.
+Do not open the HTML files directly. Choose a `.tif` or `.tiff` SAR image and click **Analyze image**. Industry and Vessel APIs are mounted at `/industry-api` and `/vessel-api` on the same server.
 
 ## Deploy online
 
-Vercel hosts the static frontend. Railway hosts three Python API services from this monorepo.
+The root `vercel.json` defines four Vercel Services: a static frontend, SAR analysis, industry search, and vessel search. Import this repository into a Vercel project with Services enabled. Each service builds from the root path declared in `vercel.json`; Vercel's project-level rewrites expose the frontend and the API paths.
 
-### Railway backends
+Public paths in the proposed routing are `/` and other page/static paths to the frontend, `/api/*` to SAR, `/api/ships` to vessel, and `/geocode` plus `/nearby-industries` to industry. The browser calls these same-origin paths, so no service bindings are needed: there are no server-side calls between the backend services. Geoapify and AISStream are external providers and their API keys belong in the matching Vercel service environment variables, not in the frontend.
 
-Create a Railway project from this GitHub repository, then add three services from the same repository. For each service, set its root directory and Railway config file path:
-
-| Service | Root directory | Config file path | Secret variables |
-| --- | --- | --- | --- |
-| SAR analysis | `backend` | `/backend/railway.toml` | None |
-| Industry | `sih-backend-main/sih-backend-main/bakend` | `/sih-backend-main/sih-backend-main/bakend/railway.toml` | `GEOAPIFY_API_KEY` |
-| Vessel | `anzil/sih_backend-main/backend` | `/anzil/sih_backend-main/backend/railway.toml` | `AISSTREAM_API_KEY`, `OCEANOVA_FRONTEND_ORIGIN` |
-
-Add `GEOAPIFY_API_KEY` and `AISSTREAM_API_KEY` under each service's Railway Variables settings. Do not commit these secrets. Generate a public Railway domain for every service after it deploys.
-
-Railway's Free Trial currently provides a one-time $5 credit for 30 days. After that, its Free plan has limited monthly usage credit and 0.5 GB RAM per service; the SAR service may exceed that memory limit while loading or running the model. Check Railway's current usage page before leaving services running. Trial services can stop when the trial credit is exhausted.
-
-### Vercel frontend
-
-Import the same GitHub repository into Vercel with the project root as the root directory. The committed `vercel.json` builds the static pages. Add these Production environment variables, using the public Railway domains (no trailing slash):
-
-   ```text
-   OCEANOVA_ANALYSIS_URL=https://your-sar-service.up.railway.app
-   OCEANOVA_INDUSTRY_URL=https://your-industry-service.up.railway.app
-   OCEANOVA_VESSEL_URL=https://your-vessel-service.up.railway.app
-   ```
-
-After Vercel deploys, copy its production URL (for example, `https://your-oceanova.vercel.app`) into the Railway vessel service's `OCEANOVA_FRONTEND_ORIGIN` variable and redeploy that service so CORS allows the Vercel origin. Vercel URLs are public configuration; never put API keys in Vercel client-side variables.
+Vercel Services are a beta feature that may require account access. Before relying on this deployment for a submission, note the platform constraints: Vercel Functions have a 4.5 MB request-body limit, while SAR uploads currently allow up to 250 MB; the PyTorch model also needs substantial memory. The AIS service starts a background WebSocket collector, which is not guaranteed to persist between serverless invocations. Large-image analysis and live vessel collection may therefore need a long-running backend host even if the site itself is served by Vercel.
 
 ## What’s included
 
-- `index.html` — OCEANOVA upload, preview, and results page.
-- `start-oceanova.bat` — installs/checks dependencies and starts the local service.
+- `Sih hackthon/welcome.html` — OCEANOVA entry page.
+- `index.html` — OCEANOVA upload, preview, and results page, served at `/analysis/`.
+- `start-oceanova.bat` — installs/checks dependencies and starts the unified local server.
 - `backend/` — API code and bundled model checkpoint.
 - `backend/requirements.txt` — Python packages needed by the service.
 - `backend/model/benchmark/garcia_boundary_test.json` — held-out benchmark summary reported by the training pipeline.
@@ -93,8 +43,8 @@ The results show the SAR image with the predicted oil region highlighted, genera
 
 After image analysis, the **Search Nearby Industry** and **Search Nearby Vessel** buttons pass the spill centroid latitude and longitude from the SAR result into their respective screens. Each screen fills the coordinates and starts its search automatically. The coordinates come from the GeoTIFF geospatial metadata; the U-Net predicts the oil mask, not latitude or longitude. A valid georeferenced centroid is required.
 
-- **Industry** uses the Geoapify-backed service on port `5000` with a default search radius of 200 km. Results are mapped candidates, not confirmed spill sources; coverage depends on provider data.
-- **Vessel** uses the AISStream-backed service on port `5001` with a default search radius of 100 km. AIS positions are time-limited and may not include every vessel; proximity does not establish cause.
+- **Industry** uses the Geoapify-backed API through port `8000` with a default search radius of 200 km. Results are mapped candidates, not confirmed spill sources; coverage depends on provider data.
+- **Vessel** uses the AISStream-backed API through port `8000` with a default search radius of 100 km. AIS positions are time-limited and may not include every vessel; proximity does not establish cause.
 
 The real-data `Eclipso_Final_UNet.pt` checkpoint from the supplied checkpoints archive is included in `backend/model/weights/`. The app loads this Garcia-INPE boundary-aware U-Net and uses the notebook's normalization, 256-pixel tiles, 128-pixel stride, and 0.96 threshold. It does not silently substitute another model. The final held-out test-set pixel accuracy is **99.32%**, calculated to two decimals from the 22 matching 800×600 scenes. The notebook reports micro-averaged test metrics to four decimal places; the matching test split provides 115,125 ground-truth oil pixels across 10,560,000 total pixels. The resulting confusion-count combinations all round to the same 99.32% accuracy.
 

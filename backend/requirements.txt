@@ -10,3 +10,7 @@ pillow>=10.0
 scipy>=1.11
 httpx>=0.27
 websockets>=14
+Flask>=3.0,<4.0
+flask-cors>=4.0
+python-dotenv>=1.0
+requests>=2.31,<3.0

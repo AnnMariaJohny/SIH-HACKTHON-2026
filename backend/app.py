@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import base64
 import asyncio
+import importlib.util
 import io
 import json
 import math
@@ -19,6 +20,9 @@ import torch
 import websockets
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, Response
+from fastapi.staticfiles import StaticFiles
+from starlette.middleware.wsgi import WSGIMiddleware
 from PIL import Image
 from pyproj import Geod, Transformer
 from rasterio.crs import CRS
@@ -29,8 +33,13 @@ from shapely.geometry import shape
 from shapely.ops import transform as transform_geometry, unary_union
 
 HERE = Path(__file__).resolve().parent
+WELCOME_PAGE = HERE.parent / "Sih hackthon" / "welcome.html"
+LOGIN_ASSETS = HERE.parent / "Sih hackthon" / "LOGIN"
+EARTH_ASSETS = HERE.parent / "Sih hackthon" / "earth"
 INDUSTRY_FRONTEND = HERE.parent / "sih-backend-main" / "frontend"
 VESSEL_FRONTEND = HERE.parent / "anzil" / "sih_backend-main"
+INDUSTRY_BACKEND = HERE.parent / "sih-backend-main" / "sih-backend-main" / "bakend" / "app.py"
+VESSEL_BACKEND = HERE.parent / "anzil" / "sih_backend-main" / "backend" / "app.py"
 BUNDLED_ROOT = HERE / "model"
 ECLIPSO_ROOT = Path(os.environ.get("ECLIPSO_ROOT", str(BUNDLED_ROOT))).resolve()
 WEIGHTS_ROOT = BUNDLED_ROOT / "weights"
@@ -79,6 +88,25 @@ print(
 
 app = FastAPI(title="OCEANOVA SAR oil-spill detection")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["POST", "GET"], allow_headers=["*"])
+app.mount("/LOGIN", StaticFiles(directory=LOGIN_ASSETS), name="login-assets")
+app.mount("/earth", StaticFiles(directory=EARTH_ASSETS), name="earth-assets")
+
+
+def load_flask_app(module_name: str, module_path: Path):
+    spec = importlib.util.spec_from_file_location(module_name, module_path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"Could not load backend module: {module_path}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module.app
+
+
+if not os.environ.get("VERCEL"):
+    industry_api = load_flask_app("oceanova_industry_backend", INDUSTRY_BACKEND)
+    vessel_api = load_flask_app("oceanova_vessel_backend", VESSEL_BACKEND)
+    app.mount("/industry-api", WSGIMiddleware(industry_api), name="industry-api")
+    app.mount("/vessel-api", WSGIMiddleware(vessel_api), name="vessel-api")
 
 
 def infer(sar: np.ndarray) -> np.ndarray:
@@ -351,9 +379,27 @@ def health():
 
 
 @app.get("/")
+@app.get("/welcome.html", include_in_schema=False)
+def welcome():
+    return FileResponse(WELCOME_PAGE)
+
+
+@app.get("/analysis/", include_in_schema=False)
+@app.get("/analysis", include_in_schema=False)
 def index():
-    from fastapi.responses import FileResponse
     return FileResponse(HERE.parent / "index.html")
+
+
+@app.get("/deployment-config.js", include_in_schema=False)
+def deployment_config():
+    return Response(
+        "window.OCEANOVA_ENDPOINTS = Object.freeze({"
+        "analysis: window.location.origin, "
+        "industry: window.location.origin + '/industry-api', "
+        "vessel: window.location.origin + '/vessel-api'"
+        "});\n",
+        media_type="application/javascript",
+    )
 
 
 @app.post("/api/preview")

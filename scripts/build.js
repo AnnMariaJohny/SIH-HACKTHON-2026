@@ -3,33 +3,19 @@ const path = require("node:path");
 
 const projectRoot = path.resolve(__dirname, "..");
 const outputDirectory = path.join(projectRoot, "dist");
-const endpointVariables = {
-    analysis: "OCEANOVA_ANALYSIS_URL",
-    industry: "OCEANOVA_INDUSTRY_URL",
-    vessel: "OCEANOVA_VESSEL_URL"
-};
 const localEndpoints = {
     analysis: "http://127.0.0.1:8000",
-    industry: "http://127.0.0.1:5000",
-    vessel: "http://127.0.0.1:5001"
+    industry: "http://127.0.0.1:8000/industry-api",
+    vessel: "http://127.0.0.1:8000/vessel-api"
 };
 
-const endpoints = Object.fromEntries(
-    Object.entries(endpointVariables).map(([service, variable]) => [
-        service,
-        (process.env[variable] || (process.env.VERCEL ? "" : localEndpoints[service])).replace(/\/+$/, "")
-    ])
-);
-
-if (process.env.VERCEL) {
-    const missing = Object.values(endpointVariables).filter((name) => !process.env[name]);
-    if (missing.length) {
-        console.warn(`Backend APIs are not connected yet. Configure in Vercel when ready: ${missing.join(", ")}`);
-    }
-}
+const endpoints = process.env.VERCEL
+    ? "Object.freeze({analysis:window.location.origin,industry:window.location.origin,vessel:window.location.origin})"
+    : `Object.freeze(${JSON.stringify(localEndpoints)})`;
 
 const files = [
-    ["index.html", "index.html"],
+    ["index.html", "analysis/index.html"],
+    ["Sih hackthon/welcome.html", "index.html"],
     ["Sih hackthon/welcome.html", "welcome.html"],
     ["sih-backend-main/frontend/index.html", "industry/index.html"],
     ["sih-backend-main/frontend/style.css", "industry/style.css"],
@@ -61,7 +47,7 @@ for (const [source, destination] of directories) {
 
 fs.writeFileSync(
     path.join(outputDirectory, "deployment-config.js"),
-    `window.OCEANOVA_ENDPOINTS = Object.freeze(${JSON.stringify(endpoints)});\n`
+    `window.OCEANOVA_ENDPOINTS = ${endpoints};\n`
 );
 
 console.log(`Built OCEANOVA frontend to ${outputDirectory}`);

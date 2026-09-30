@@ -116,6 +116,6 @@ form.addEventListener("submit", async (event) => {
     }
 
     message.textContent = "ACCESS GRANTED.";
-    window.location.href = "/";
+    window.location.href = "/analysis/";
 
 });

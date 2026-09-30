@@ -236,7 +236,10 @@
 		let overlays = [];
 
 		function defaultApiBase() {
-			return window.OCEANOVA_ENDPOINTS?.vessel ?? "http://localhost:5001";
+			if (window.OCEANOVA_ENDPOINTS?.vessel !== undefined) {
+				return window.OCEANOVA_ENDPOINTS.vessel || window.location.origin;
+			}
+			return `${window.location.origin}/vessel-api`;
 		}
 
 		const defaultApi = defaultApiBase();
@@ -362,9 +365,7 @@
 			const lat = Number($("#latitude").value);
 			const lon = Number($("#longitude").value);
 			const radius = Number($("#radius").value);
-			const apiBase = ["localhost", "127.0.0.1", ""].includes(window.location.hostname)
-				? "http://localhost:5001"
-				: apiInput.value.trim().replace(/\/+$/, "");
+			const apiBase = apiInput.value.trim().replace(/\/+$/, "");
 
 			if (!Number.isFinite(lat) || lat < -90 || lat > 90 || !Number.isFinite(lon) || lon < -180 || lon > 180) {
 				errorBox.textContent = "Enter a latitude between -90 and 90 and a longitude between -180 and 180.";
@@ -393,7 +394,7 @@
 				const contentType = response.headers.get("content-type") || "";
 				if (!contentType.includes("application/json")) {
 					throw new Error(response.status === 404
-						? `Backend endpoint not found at ${apiBase}/api/ships. Restart this project's Flask backend on port 5001.`
+						? `Backend endpoint not found at ${apiBase}/api/ships.`
 						: `Backend returned a non-JSON response (HTTP ${response.status})`);
 				}
 				const data = await response.json();
