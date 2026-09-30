@@ -201,22 +201,8 @@ def frontend_asset(filename):
 
     return jsonify({
         "success": False,
-        "error": "Asset not found."
+        "error": "Not found."
     }), 404
-
-@app.errorhandler(404)
-def not_found(error):
-    return jsonify({
-        "success": False,
-        "error": "Endpoint not found."
-    }), 404
-
-@app.errorhandler(405)
-def method_not_allowed(error):
-    return jsonify({
-        "success": False,
-        "error": "Method not allowed."
-    }), 405
 
 
 # ==========================================================
@@ -880,7 +866,6 @@ def search_overpass_oil_sources(latitude, longitude, radius):
 # ==========================================================
 
 @app.route("/nearby-industries", methods=["POST"])
-@app.route("/industry-api/nearby-industries", methods=["POST"])
 def nearby_industries():
 
     try:
