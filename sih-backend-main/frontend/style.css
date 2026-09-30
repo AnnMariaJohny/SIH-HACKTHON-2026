@@ -95,6 +95,8 @@ body {
     align-items: flex-start;
     justify-content: space-between;
 
+    pointer-events: auto;
+
     background:
         linear-gradient(
             to bottom,
