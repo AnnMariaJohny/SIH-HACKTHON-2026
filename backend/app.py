@@ -75,8 +75,10 @@ if "model_state_dict" not in checkpoint:
     raise RuntimeError(f"Checkpoint is not a Garcia-trained U-Net state: {CHECKPOINT}")
 model = UNet(in_ch=1, base=16, depth=4).to(DEVICE)
 model.load_state_dict(checkpoint["model_state_dict"])
+import torch
+torch.set_num_threads(2)  # Prevent CPU thrashing on Render free tier
 SAR_MEAN, SAR_STD = -18.651564, 4.844823
-THRESHOLD, TILE_SIZE, STRIDE = 0.96, 256, 128
+THRESHOLD, TILE_SIZE, STRIDE = 0.96, 256, 256  # No overlap to speed up 4x
 MODEL_LABEL = "Garcia-INPE real-data boundary-aware U-Net"
 if CHECKPOINT.name not in {"Eclipso_Final_UNet.pt", "garcia_unet_boundary_best.pt"}:
     MODEL_BENCHMARK = None
